@@ -466,8 +466,7 @@ public class Main {
             System.out.println("Stock not found.");
             return;
         }
-
-        // Check if user owns the stock
+       // Check if user owns the stock
         CustomLinkedList<DatabaseManager.PortfolioHolding> portfolio = DatabaseManager.getPortfolio(userId);
         int ownedQty = 0;
         for (DatabaseManager.PortfolioHolding holding : portfolio) {
