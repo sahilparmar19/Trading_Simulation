@@ -112,7 +112,7 @@ public class TradeTransaction {
             conn.commit();
             return true;
         } catch (SQLException e) {
-            System.err.println("Trade matching failed, rolling back. Reason: " + e.getMessage());
+            // System.err.println("Trade matching failed, rolling back. Reason: " + e.getMessage());
             if (conn != null) {
                 try {
                     conn.rollback();

@@ -78,7 +78,7 @@ public class MatchingEngine extends Thread {
                     } else {
                         // If transaction failed (usually due to buyer insufficient balance),
                         // we must cancel the buy order so we don't get stuck in an infinite loop.
-                        System.err.println("Match failed for Buy Order " + buyOrder.getOrderId() + " and Sell Order " + sellOrder.getOrderId() + ". Cancelling buy order due to transaction failure.");
+                        // System.err.println("Match failed for Buy Order " + buyOrder.getOrderId() + " and Sell Order " + sellOrder.getOrderId() + ". Cancelling buy order due to transaction failure.");
                         book.getBuySide().pollMax();
                         DatabaseManager.updateOrder(buyOrder.getOrderId(), "CANCELLED", buyOrder.getQuantity());
                     }

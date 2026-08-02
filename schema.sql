@@ -436,3 +436,128 @@ INSERT INTO portfolio (user_id, ticker, quantity, avg_buy_price) VALUES
 (3, 'HDFCBANK', 20, 1570.00),  -- Bob holds 20 HDFCBANK
 (4, 'TATAMOTORS', 50, 600.00), -- Charlie holds 50 TATAMOTORS
 (4, 'SUNPHARMA', 15, 1120.00); -- Charlie holds 15 SUNPHARMA
+
+-- ==========================================================
+-- 4. Functions, Procedures, and Triggers
+-- ==========================================================
+
+-- Function: get_user_portfolio_value
+CREATE OR REPLACE FUNCTION get_user_portfolio_value(p_user_id INT)
+RETURNS NUMERIC AS $$
+DECLARE
+    total_value NUMERIC(20, 2) := 0.00;
+BEGIN
+    SELECT COALESCE(SUM(p.quantity * s.current_price), 0.00)
+    INTO total_value
+    FROM portfolio p
+    JOIN stocks s ON p.ticker = s.ticker
+    WHERE p.user_id = p_user_id;
+    
+    RETURN total_value;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Procedure: process_trade
+CREATE OR REPLACE PROCEDURE process_trade(
+    p_buy_order_id INT, 
+    p_sell_order_id INT, 
+    p_executed_price NUMERIC, 
+    p_quantity INT
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_buyer_id INT;
+    v_seller_id INT;
+    v_ticker VARCHAR(20);
+    v_total_cost NUMERIC(15, 2);
+    v_buyer_balance NUMERIC(15, 2);
+    v_buyer_qty INT;
+BEGIN
+    v_total_cost := p_executed_price * p_quantity;
+
+    -- Get buyer and seller info
+    SELECT user_id, ticker INTO v_buyer_id, v_ticker FROM orders WHERE order_id = p_buy_order_id;
+    SELECT user_id INTO v_seller_id FROM orders WHERE order_id = p_sell_order_id;
+
+    -- Check buyer balance
+    SELECT balance INTO v_buyer_balance FROM users WHERE user_id = v_buyer_id FOR UPDATE;
+    IF v_buyer_balance < v_total_cost THEN
+        RAISE EXCEPTION 'Buyer has insufficient funds. Balance: %, Cost: %', v_buyer_balance, v_total_cost;
+    END IF;
+
+    -- Deduct from buyer
+    UPDATE users SET balance = balance - v_total_cost WHERE user_id = v_buyer_id;
+    
+    -- Credit to seller
+    UPDATE users SET balance = balance + v_total_cost WHERE user_id = v_seller_id;
+
+    -- Update buyer portfolio
+    SELECT quantity INTO v_buyer_qty FROM portfolio WHERE user_id = v_buyer_id AND ticker = v_ticker;
+    IF FOUND THEN
+        UPDATE portfolio 
+        SET quantity = quantity + p_quantity,
+            avg_buy_price = ((quantity * avg_buy_price) + v_total_cost) / (quantity + p_quantity)
+        WHERE user_id = v_buyer_id AND ticker = v_ticker;
+    ELSE
+        INSERT INTO portfolio (user_id, ticker, quantity, avg_buy_price) 
+        VALUES (v_buyer_id, v_ticker, p_quantity, p_executed_price);
+    END IF;
+
+    -- Update seller portfolio
+    UPDATE portfolio SET quantity = quantity - p_quantity WHERE user_id = v_seller_id AND ticker = v_ticker;
+    DELETE FROM portfolio WHERE user_id = v_seller_id AND ticker = v_ticker AND quantity <= 0;
+
+    -- Insert trade
+    INSERT INTO trades (buy_order_id, sell_order_id, ticker, executed_price, quantity) 
+    VALUES (p_buy_order_id, p_sell_order_id, v_ticker, p_executed_price, p_quantity);
+
+    -- Update orders (simplified)
+    UPDATE orders SET quantity = quantity - p_quantity, status = CASE WHEN quantity - p_quantity <= 0 THEN 'MATCHED' ELSE 'PENDING' END WHERE order_id IN (p_buy_order_id, p_sell_order_id);
+    
+END;
+$$;
+
+-- Trigger Function: log_price_change
+CREATE OR REPLACE FUNCTION log_price_change()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.current_price <> OLD.current_price THEN
+        INSERT INTO price_history (ticker, price)
+        VALUES (NEW.ticker, NEW.current_price);
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger: trg_record_price_history
+DROP TRIGGER IF EXISTS trg_record_price_history ON stocks;
+CREATE TRIGGER trg_record_price_history
+AFTER UPDATE OF current_price ON stocks
+FOR EACH ROW
+EXECUTE FUNCTION log_price_change();
+
+-- Trigger Function: check_order_balance
+CREATE OR REPLACE FUNCTION check_order_balance()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_balance NUMERIC(15, 2);
+    v_cost NUMERIC(15, 2);
+BEGIN
+    IF NEW.is_buy = TRUE THEN
+        SELECT balance INTO v_balance FROM users WHERE user_id = NEW.user_id;
+        v_cost := NEW.price * NEW.quantity;
+        IF v_balance < v_cost THEN
+            RAISE EXCEPTION 'Insufficient balance to place buy order. Required: %, Available: %', v_cost, v_balance;
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger: trg_check_balance_before_order
+DROP TRIGGER IF EXISTS trg_check_balance_before_order ON orders;
+CREATE TRIGGER trg_check_balance_before_order
+BEFORE INSERT ON orders
+FOR EACH ROW
+EXECUTE FUNCTION check_order_balance();
