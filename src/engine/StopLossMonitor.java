@@ -6,6 +6,7 @@ import model.Order;
 import model.OrderStatus;
 import model.OrderType;
 import model.StopLossOrder;
+import model.StopLossStatus;
 import model.Stock;
 
 import java.sql.*;
@@ -36,13 +37,14 @@ public class StopLossMonitor extends Thread {
     }
 
     private void checkStopLossOrders() {
-        String sql = "SELECT * FROM stop_loss_orders WHERE status = 'ACTIVE'";
+        String sql = "SELECT * FROM stop_loss_orders WHERE status = ?";
         Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
             conn = DatabaseManager.getConnection();
             pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, StopLossStatus.ACTIVE.name());
             rs = pstmt.executeQuery();
 
             while (rs.next()) {
@@ -51,9 +53,10 @@ public class StopLossMonitor extends Thread {
                 String ticker = rs.getString("ticker");
                 int quantity = rs.getInt("quantity");
                 double stopPrice = rs.getDouble("stop_price");
+                StopLossStatus status = StopLossStatus.valueOf(rs.getString("status"));
 
                 Stock stock = DatabaseManager.getStock(ticker);
-                if (stock != null && stock.getCurrentPrice() <= stopPrice) {
+                if (status == StopLossStatus.ACTIVE && stock != null && stock.getCurrentPrice() <= stopPrice) {
                     triggerStopLoss(slId, userId, ticker, quantity, stopPrice);
                 }
             }
@@ -73,11 +76,12 @@ public class StopLossMonitor extends Thread {
             conn.setAutoCommit(false);
 
             // 1. Update stop-loss order status to TRIGGERED
-            String updateSlSql = "UPDATE stop_loss_orders SET status = 'TRIGGERED' WHERE sl_id = ?";
+            String updateSlSql = "UPDATE stop_loss_orders SET status = ? WHERE sl_id = ?";
             PreparedStatement ps1 = null;
             try {
                 ps1 = conn.prepareStatement(updateSlSql);
-                ps1.setInt(1, slId);
+                ps1.setString(1, StopLossStatus.TRIGGERED.name());
+                ps1.setInt(2, slId);
                 ps1.executeUpdate();
             } finally {
                 if (ps1 != null) { try { ps1.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
@@ -109,7 +113,7 @@ public class StopLossMonitor extends Thread {
 
             if (orderId != -1) {
                 // Log trigger
-                StopLossOrder slo = new StopLossOrder(slId, userId, ticker, quantity, stopPrice, new Timestamp(System.currentTimeMillis()), "TRIGGERED");
+                StopLossOrder slo = new StopLossOrder(slId, userId, ticker, quantity, stopPrice, new Timestamp(System.currentTimeMillis()), StopLossStatus.TRIGGERED);
                 IOManager.logStopLossTrigger(slo);
 
                 // Insert into OrderBook BST

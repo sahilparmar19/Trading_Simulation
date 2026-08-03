@@ -13,19 +13,19 @@ IPO {
     private long sharesRemaining;
     private Timestamp openTime;
     private Timestamp closeTime;
-    private String status; // UPCOMING, OPEN, CLOSED, LISTED
+    private IPOStatus status;
 
     public IPO(int ipoId, String ticker, String companyName, int sectorId, double ipoPrice,
-               long totalShares, long sharesRemaining, Timestamp openTime, Timestamp closeTime, String status) {
+               long totalShares, long sharesRemaining, Timestamp openTime, Timestamp closeTime, IPOStatus status) {
         this.ipoId = ipoId;
         this.ticker = ticker;
         this.companyName = companyName;
         this.sectorId = sectorId;
-        this.ipoPrice = ipoPrice;
-        this.totalShares = totalShares;
-        this.sharesRemaining = sharesRemaining;
+        setIpoPrice(ipoPrice);
+        setTotalShares(totalShares);
+        setSharesRemaining(sharesRemaining);
         this.openTime = openTime;
-        this.closeTime = closeTime;
+        setCloseTime(closeTime);
         this.status = status;
     }
 
@@ -42,20 +42,50 @@ IPO {
     public void setSectorId(int sectorId) { this.sectorId = sectorId; }
 
     public double getIpoPrice() { return ipoPrice; }
-    public void setIpoPrice(double ipoPrice) { this.ipoPrice = ipoPrice; }
+    public void setIpoPrice(double ipoPrice) {
+        if (ipoPrice <= 0) {
+            throw new IllegalArgumentException("IPO price must be greater than zero.");
+        }
+        this.ipoPrice = ipoPrice;
+    }
 
     public long getTotalShares() { return totalShares; }
-    public void setTotalShares(long totalShares) { this.totalShares = totalShares; }
+    public void setTotalShares(long totalShares) {
+        if (totalShares <= 0) {
+            throw new IllegalArgumentException("Total shares must be greater than zero.");
+        }
+        if (sharesRemaining > totalShares) {
+            throw new IllegalArgumentException("Shares remaining cannot exceed total shares.");
+        }
+        this.totalShares = totalShares;
+    }
 
     public long getSharesRemaining() { return sharesRemaining; }
-    public void setSharesRemaining(long sharesRemaining) { this.sharesRemaining = sharesRemaining; }
+    public void setSharesRemaining(long sharesRemaining) {
+        if (sharesRemaining < 0 || sharesRemaining > totalShares) {
+            throw new IllegalArgumentException("Shares remaining must be between zero and total shares.");
+        }
+        this.sharesRemaining = sharesRemaining;
+    }
 
     public Timestamp getOpenTime() { return openTime; }
-    public void setOpenTime(Timestamp openTime) { this.openTime = openTime; }
+    public void setOpenTime(Timestamp openTime) {
+        validateTimeRange(openTime, closeTime);
+        this.openTime = openTime;
+    }
 
     public Timestamp getCloseTime() { return closeTime; }
-    public void setCloseTime(Timestamp closeTime) { this.closeTime = closeTime; }
+    public void setCloseTime(Timestamp closeTime) {
+        validateTimeRange(openTime, closeTime);
+        this.closeTime = closeTime;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public IPOStatus getStatus() { return status; }
+    public void setStatus(IPOStatus status) { this.status = status; }
+
+    private static void validateTimeRange(Timestamp openTime, Timestamp closeTime) {
+        if (openTime != null && closeTime != null && closeTime.before(openTime)) {
+            throw new IllegalArgumentException("Close time cannot be before open time.");
+        }
+    }
 }

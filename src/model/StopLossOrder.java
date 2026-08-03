@@ -9,14 +9,14 @@ public class StopLossOrder {
     private int quantity;
     private double stopPrice;
     private Timestamp createdAt;
-    private String status; // ACTIVE, TRIGGERED, CANCELLED
+    private StopLossStatus status;
 
-    public StopLossOrder(int slId, int userId, String ticker, int quantity, double stopPrice, Timestamp createdAt, String status) {
+    public StopLossOrder(int slId, int userId, String ticker, int quantity, double stopPrice, Timestamp createdAt, StopLossStatus status) {
         this.slId = slId;
         this.userId = userId;
         this.ticker = ticker;
-        this.quantity = quantity;
-        this.stopPrice = stopPrice;
+        setQuantity(quantity);
+        setStopPrice(stopPrice);
         this.createdAt = createdAt;
         this.status = status;
     }
@@ -31,14 +31,24 @@ public class StopLossOrder {
     public void setTicker(String ticker) { this.ticker = ticker; }
 
     public int getQuantity() { return quantity; }
-    public void setQuantity(int quantity) { this.quantity = quantity; }
+    public void setQuantity(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero.");
+        }
+        this.quantity = quantity;
+    }
 
     public double getStopPrice() { return stopPrice; }
-    public void setStopPrice(double stopPrice) { this.stopPrice = stopPrice; }
+    public void setStopPrice(double stopPrice) {
+        if (stopPrice < 0) {
+            throw new IllegalArgumentException("Stop price must be greater than or equal to zero.");
+        }
+        this.stopPrice = stopPrice;
+    }
 
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public StopLossStatus getStatus() { return status; }
+    public void setStatus(StopLossStatus status) { this.status = status; }
 }

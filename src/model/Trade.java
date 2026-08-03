@@ -16,29 +16,48 @@ public class Trade {
         this.buyOrderId = buyOrderId;
         this.sellOrderId = sellOrderId;
         this.ticker = ticker;
-        this.executedPrice = executedPrice;
-        this.quantity = quantity;
+        setExecutedPrice(executedPrice);
+        setQuantity(quantity);
         this.executedAt = executedAt;
     }
 
     public int getTradeId() { return tradeId; }
-    public void setTradeId(int tradeId) { this.tradeId = tradeId; }
 
     public int getBuyOrderId() { return buyOrderId; }
-    public void setBuyOrderId(int buyOrderId) { this.buyOrderId = buyOrderId; }
 
     public int getSellOrderId() { return sellOrderId; }
-    public void setSellOrderId(int sellOrderId) { this.sellOrderId = sellOrderId; }
 
     public String getTicker() { return ticker; }
     public void setTicker(String ticker) { this.ticker = ticker; }
 
     public double getExecutedPrice() { return executedPrice; }
-    public void setExecutedPrice(double executedPrice) { this.executedPrice = executedPrice; }
+    public void setExecutedPrice(double executedPrice) {
+        if (executedPrice <= 0) {
+            throw new IllegalArgumentException("Executed price must be greater than zero.");
+        }
+        this.executedPrice = executedPrice;
+    }
 
     public int getQuantity() { return quantity; }
-    public void setQuantity(int quantity) { this.quantity = quantity; }
+    public void setQuantity(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero.");
+        }
+        this.quantity = quantity;
+    }
 
     public Timestamp getExecutedAt() { return executedAt; }
-    public void setExecutedAt(Timestamp executedAt) { this.executedAt = executedAt; }
+
+    @Override
+    public String toString() {
+        return "Trade{" +
+                "tradeId=" + tradeId +
+                ", buyOrderId=" + buyOrderId +
+                ", sellOrderId=" + sellOrderId +
+                ", ticker='" + ticker + '\'' +
+                ", executedPrice=" + executedPrice +
+                ", quantity=" + quantity +
+                ", executedAt=" + executedAt +
+                '}';
+    }
 }

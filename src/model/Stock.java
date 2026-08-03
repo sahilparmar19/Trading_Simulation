@@ -26,9 +26,9 @@ public class Stock {
         this.ticker = ticker;
         this.companyName = companyName;
         this.sectorId = sectorId;
-        this.currentPrice = currentPrice;
-        this.openPrice = openPrice;
-        this.prevClose = prevClose;
+        setCurrentPrice(currentPrice);
+        setOpenPrice(openPrice);
+        setPrevClose(prevClose);
         this.marketCap = marketCap;
         this.peRatio = peRatio;
         this.pbRatio = pbRatio;
@@ -53,13 +53,22 @@ public class Stock {
     public void setSectorId(int sectorId) { this.sectorId = sectorId; }
 
     public double getCurrentPrice() { return currentPrice; }
-    public void setCurrentPrice(double currentPrice) { this.currentPrice = currentPrice; }
+    public void setCurrentPrice(double currentPrice) {
+        validatePrice(currentPrice);
+        this.currentPrice = currentPrice;
+    }
 
     public double getOpenPrice() { return openPrice; }
-    public void setOpenPrice(double openPrice) { this.openPrice = openPrice; }
+    public void setOpenPrice(double openPrice) {
+        validatePrice(openPrice);
+        this.openPrice = openPrice;
+    }
 
     public double getPrevClose() { return prevClose; }
-    public void setPrevClose(double prevClose) { this.prevClose = prevClose; }
+    public void setPrevClose(double prevClose) {
+        validatePrice(prevClose);
+        this.prevClose = prevClose;
+    }
 
     public double getMarketCap() { return marketCap; }
     public void setMarketCap(double marketCap) { this.marketCap = marketCap; }
@@ -93,4 +102,33 @@ public class Stock {
 
     public String getExchange() { return exchange; }
     public void setExchange(String exchange) { this.exchange = exchange; }
+
+    private static void validatePrice(double price) {
+        if (price <= 0) {
+            throw new IllegalArgumentException("Price must be greater than zero.");
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Stock{" +
+                "ticker='" + ticker + '\'' +
+                ", companyName='" + companyName + '\'' +
+                ", sectorId=" + sectorId +
+                ", currentPrice=" + currentPrice +
+                ", openPrice=" + openPrice +
+                ", prevClose=" + prevClose +
+                ", marketCap=" + marketCap +
+                ", peRatio=" + peRatio +
+                ", pbRatio=" + pbRatio +
+                ", roe=" + roe +
+                ", roa=" + roa +
+                ", totalShares=" + totalShares +
+                ", promoterHold=" + promoterHold +
+                ", instHold=" + instHold +
+                ", retailHold=" + retailHold +
+                ", isListed=" + isListed +
+                ", exchange='" + exchange + '\'' +
+                '}';
+    }
 }

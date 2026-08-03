@@ -9,7 +9,7 @@ public class PriceHistory {
 
     public PriceHistory(String ticker, double price, Timestamp recordedAt) {
         this.ticker = ticker;
-        this.price = price;
+        setPrice(price);
         this.recordedAt = recordedAt;
     }
 
@@ -17,8 +17,21 @@ public class PriceHistory {
     public void setTicker(String ticker) { this.ticker = ticker; }
 
     public double getPrice() { return price; }
-    public void setPrice(double price) { this.price = price; }
+    public void setPrice(double price) {
+        if (price <= 0) {
+            throw new IllegalArgumentException("Price must be greater than zero.");
+        }
+        this.price = price;
+    }
 
     public Timestamp getRecordedAt() { return recordedAt; }
-    public void setRecordedAt(Timestamp recordedAt) { this.recordedAt = recordedAt; }
+
+    @Override
+    public String toString() {
+        return "PriceHistory{" +
+                "ticker='" + ticker + '\'' +
+                ", price=" + price +
+                ", recordedAt=" + recordedAt +
+                '}';
+    }
 }

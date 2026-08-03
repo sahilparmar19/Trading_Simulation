@@ -1,6 +1,7 @@
 package db;
 
 import model.IPO;
+import model.IPOStatus;
 import java.sql.*;
 
 public class IPOManager {
@@ -40,7 +41,7 @@ public class IPOManager {
 
             // 2. Insert into ipos
             String insertIpoSql = "INSERT INTO ipos (ticker, company_name, sector_id, ipo_price, total_shares, shares_remaining, open_time, close_time, status) " +
-                                  "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'UPCOMING') RETURNING ipo_id";
+                                  "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING ipo_id";
             int ipoId = -1;
             PreparedStatement ps2 = null;
             ResultSet rs2 = null;
@@ -54,6 +55,7 @@ public class IPOManager {
                 ps2.setLong(6, totalShares);
                 ps2.setTimestamp(7, openTime);
                 ps2.setTimestamp(8, closeTime);
+                ps2.setString(9, IPOStatus.UPCOMING.name());
                 rs2 = ps2.executeQuery();
                 if (rs2.next()) {
                     ipoId = rs2.getInt(1);
@@ -79,13 +81,14 @@ public class IPOManager {
     }
 
     public static void openIPO(int ipoId) {
-        String sql = "UPDATE ipos SET status = 'OPEN' WHERE ipo_id = ?";
+        String sql = "UPDATE ipos SET status = ? WHERE ipo_id = ?";
         Connection conn = null;
         PreparedStatement pstmt = null;
         try {
             conn = DatabaseManager.getConnection();
             pstmt = conn.prepareStatement(sql);
-            pstmt.setInt(1, ipoId);
+            pstmt.setString(1, IPOStatus.OPEN.name());
+            pstmt.setInt(2, ipoId);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Error opening IPO: " + e.getMessage());
@@ -104,7 +107,7 @@ public class IPOManager {
             // 1. Fetch IPO details
             String ipoSql = "SELECT ipo_price, status FROM ipos WHERE ipo_id = ? FOR UPDATE";
             double ipoPrice = 0;
-            String status = "";
+            IPOStatus status;
             PreparedStatement ps1 = null;
             ResultSet rs1 = null;
             try {
@@ -113,7 +116,7 @@ public class IPOManager {
                 rs1 = ps1.executeQuery();
                 if (rs1.next()) {
                     ipoPrice = rs1.getDouble("ipo_price");
-                    status = rs1.getString("status");
+                    status = IPOStatus.valueOf(rs1.getString("status"));
                 } else {
                     throw new SQLException("IPO not found");
                 }
@@ -122,7 +125,7 @@ public class IPOManager {
                 if (ps1 != null) { try { ps1.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
             }
 
-            if (!status.equals("OPEN")) {
+            if (status != IPOStatus.OPEN) {
                 throw new SQLException("IPO is not open for applications. Status: " + status);
             }
 
@@ -201,7 +204,7 @@ public class IPOManager {
             String ticker = "";
             double ipoPrice = 0;
             long totalShares = 0;
-            String status = "";
+            IPOStatus status;
             PreparedStatement ps1 = null;
             ResultSet rs1 = null;
             try {
@@ -212,7 +215,7 @@ public class IPOManager {
                     ticker = rs1.getString("ticker");
                     ipoPrice = rs1.getDouble("ipo_price");
                     totalShares = rs1.getLong("total_shares");
-                    status = rs1.getString("status");
+                    status = IPOStatus.valueOf(rs1.getString("status"));
                 } else {
                     throw new SQLException("IPO not found");
                 }
@@ -221,7 +224,7 @@ public class IPOManager {
                 if (ps1 != null) { try { ps1.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
             }
 
-            if (!status.equals("OPEN")) {
+            if (status != IPOStatus.OPEN) {
                 throw new SQLException("IPO is not open/cannot be allotted. Status: " + status);
             }
 
@@ -244,12 +247,13 @@ public class IPOManager {
 
             if (totalApplied == 0) {
                 // No applicants: close IPO
-                String updateIpoSql = "UPDATE ipos SET status = 'CLOSED', shares_remaining = ? WHERE ipo_id = ?";
+                String updateIpoSql = "UPDATE ipos SET status = ?, shares_remaining = ? WHERE ipo_id = ?";
                 PreparedStatement ps3 = null;
                 try {
                     ps3 = conn.prepareStatement(updateIpoSql);
-                    ps3.setLong(1, totalShares);
-                    ps3.setInt(2, ipoId);
+                    ps3.setString(1, IPOStatus.CLOSED.name());
+                    ps3.setLong(2, totalShares);
+                    ps3.setInt(3, ipoId);
                     ps3.executeUpdate();
                 } finally {
                     if (ps3 != null) { try { ps3.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
@@ -330,12 +334,13 @@ public class IPOManager {
             long remainingShares = totalShares - sharesAllottedTotal;
 
             // 4. Update IPO table status to CLOSED and remaining shares
-            String updateIpoSql = "UPDATE ipos SET status = 'CLOSED', shares_remaining = ? WHERE ipo_id = ?";
+            String updateIpoSql = "UPDATE ipos SET status = ?, shares_remaining = ? WHERE ipo_id = ?";
             PreparedStatement ps4 = null;
             try {
                 ps4 = conn.prepareStatement(updateIpoSql);
-                ps4.setLong(1, remainingShares);
-                ps4.setInt(2, ipoId);
+                ps4.setString(1, IPOStatus.CLOSED.name());
+                ps4.setLong(2, remainingShares);
+                ps4.setInt(3, ipoId);
                 ps4.executeUpdate();
             } finally {
                 if (ps4 != null) { try { ps4.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
@@ -393,11 +398,12 @@ public class IPOManager {
             }
 
             // 2. Set IPO status to LISTED
-            String updateIpoSql = "UPDATE ipos SET status = 'LISTED' WHERE ipo_id = ?";
+            String updateIpoSql = "UPDATE ipos SET status = ? WHERE ipo_id = ?";
             PreparedStatement ps3 = null;
             try {
                 ps3 = conn.prepareStatement(updateIpoSql);
-                ps3.setInt(1, ipoId);
+                ps3.setString(1, IPOStatus.LISTED.name());
+                ps3.setInt(2, ipoId);
                 ps3.executeUpdate();
             } finally {
                 if (ps3 != null) { try { ps3.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
@@ -437,7 +443,7 @@ public class IPOManager {
                     rs.getLong("shares_remaining"),
                     rs.getTimestamp("open_time"),
                     rs.getTimestamp("close_time"),
-                    rs.getString("status")
+                    IPOStatus.valueOf(rs.getString("status"))
                 );
             }
         } catch (SQLException e) {
