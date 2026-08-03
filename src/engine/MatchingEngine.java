@@ -4,6 +4,7 @@ import db.DatabaseManager;
 import db.TradeTransaction;
 import io.IOManager;
 import model.Order;
+import model.OrderStatus;
 import model.Trade;
 
 import java.sql.Timestamp;
@@ -80,7 +81,7 @@ public class MatchingEngine extends Thread {
                         // we must cancel the buy order so we don't get stuck in an infinite loop.
                         // System.err.println("Match failed for Buy Order " + buyOrder.getOrderId() + " and Sell Order " + sellOrder.getOrderId() + ". Cancelling buy order due to transaction failure.");
                         book.getBuySide().pollMax();
-                        DatabaseManager.updateOrder(buyOrder.getOrderId(), "CANCELLED", buyOrder.getQuantity());
+                        DatabaseManager.updateOrder(buyOrder.getOrderId(), OrderStatus.CANCELLED, buyOrder.getQuantity());
                     }
                 } else {
                     // Spread is positive, no matches possible

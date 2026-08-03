@@ -3,6 +3,8 @@ package engine;
 import db.DatabaseManager;
 import io.IOManager;
 import model.Order;
+import model.OrderStatus;
+import model.OrderType;
 import model.StopLossOrder;
 import model.Stock;
 
@@ -83,7 +85,7 @@ public class StopLossMonitor extends Thread {
 
             // 2. Create MARKET SELL order
             String insertOrderSql = "INSERT INTO orders (user_id, ticker, is_buy, order_type, price, quantity, stop_price, status, timestamp) " +
-                                    "VALUES (?, ?, FALSE, 'MARKET', 0.0, ?, 0.0, 'PENDING', NOW()) RETURNING order_id";
+                                    "VALUES (?, ?, FALSE, ?, 0.0, ?, 0.0, ?, NOW()) RETURNING order_id";
             int orderId = -1;
             PreparedStatement ps2 = null;
             ResultSet rs = null;
@@ -91,7 +93,9 @@ public class StopLossMonitor extends Thread {
                 ps2 = conn.prepareStatement(insertOrderSql);
                 ps2.setInt(1, userId);
                 ps2.setString(2, ticker);
-                ps2.setInt(3, quantity);
+                ps2.setString(3, OrderType.MARKET.name());
+                ps2.setInt(4, quantity);
+                ps2.setString(5, OrderStatus.PENDING.name());
                 rs = ps2.executeQuery();
                 if (rs.next()) {
                     orderId = rs.getInt(1);
@@ -109,7 +113,7 @@ public class StopLossMonitor extends Thread {
                 IOManager.logStopLossTrigger(slo);
 
                 // Insert into OrderBook BST
-                Order marketOrder = new Order(orderId, userId, ticker, false, "MARKET", 0.0, quantity, 0.0, new Timestamp(System.currentTimeMillis()), "PENDING");
+                Order marketOrder = new Order(orderId, userId, ticker, false, OrderType.MARKET, 0.0, quantity, 0.0, new Timestamp(System.currentTimeMillis()), OrderStatus.PENDING);
                 OrderBook book = OrderBook.get(ticker);
                 synchronized (book) {
                     book.getSellSide().insert(marketOrder);

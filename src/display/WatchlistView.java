@@ -5,6 +5,8 @@ import db.DatabaseManager;
 import ds.CustomLinkedList;
 import engine.OrderBook;
 import model.Order;
+import model.OrderStatus;
+import model.OrderType;
 import model.Stock;
 
 import java.sql.Timestamp;
@@ -133,11 +135,11 @@ public class WatchlistView {
         System.out.print(" Select: ");
         String typeChoice = scanner.nextLine().trim();
 
-        String type = "LIMIT";
+        OrderType type = OrderType.LIMIT;
         double price = 0.0;
 
         if (typeChoice.equals("1")) {
-            type = "LIMIT";
+            type = OrderType.LIMIT;
             System.out.print(" Enter Limit Price (INR): ");
             try {
                 price = Double.parseDouble(scanner.nextLine().trim());
@@ -147,7 +149,7 @@ public class WatchlistView {
                 return;
             }
         } else if (typeChoice.equals("2")) {
-            type = "MARKET";
+            type = OrderType.MARKET;
             // For market orders in limit book:
             // Buy: set price to very high so it matches lowest ask
             // Sell: set price to 0.0 so it matches highest bid
@@ -168,7 +170,7 @@ public class WatchlistView {
             qty,
             0.0,
             new Timestamp(System.currentTimeMillis()),
-            "PENDING"
+            OrderStatus.PENDING
         );
 
         int orderId = DatabaseManager.insertOrder(order);

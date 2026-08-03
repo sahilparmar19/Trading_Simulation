@@ -1,6 +1,7 @@
 package db;
 
 import model.Order;
+import model.OrderStatus;
 import java.sql.*;
 
 public class TradeTransaction {
@@ -102,11 +103,11 @@ public class TradeTransaction {
 
             // 7. Update orders in DB
             int newBuyQty = buyOrder.getQuantity() - quantity;
-            String newBuyStatus = newBuyQty == 0 ? "MATCHED" : "PENDING";
+            OrderStatus newBuyStatus = newBuyQty == 0 ? OrderStatus.MATCHED : OrderStatus.PENDING;
             updateOrderInternal(conn, buyOrder.getOrderId(), newBuyStatus, newBuyQty);
 
             int newSellQty = sellOrder.getQuantity() - quantity;
-            String newSellStatus = newSellQty == 0 ? "MATCHED" : "PENDING";
+            OrderStatus newSellStatus = newSellQty == 0 ? OrderStatus.MATCHED : OrderStatus.PENDING;
             updateOrderInternal(conn, sellOrder.getOrderId(), newSellStatus, newSellQty);
 
             conn.commit();
@@ -206,12 +207,12 @@ public class TradeTransaction {
         }
     }
 
-    private static void updateOrderInternal(Connection conn, int orderId, String status, int quantity) throws SQLException {
+    private static void updateOrderInternal(Connection conn, int orderId, OrderStatus status, int quantity) throws SQLException {
         String sql = "UPDATE orders SET status = ?, quantity = ? WHERE order_id = ?";
         PreparedStatement pstmt = null;
         try {
             pstmt = conn.prepareStatement(sql);
-            pstmt.setString(1, status);
+            pstmt.setString(1, status.name());
             pstmt.setInt(2, quantity);
             pstmt.setInt(3, orderId);
             pstmt.executeUpdate();

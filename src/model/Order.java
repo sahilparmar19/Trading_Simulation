@@ -7,23 +7,23 @@ public class Order implements Comparable<Order> {
     private int userId;
     private String ticker;
     private boolean isBuy;
-    private String orderType; // LIMIT, MARKET, STOP_LOSS
+    private OrderType orderType;
     private double price;
     private int quantity;
     private double stopPrice;
     private Timestamp timestamp;
-    private String status; // PENDING, MATCHED, CANCELLED, TRIGGERED
+    private OrderStatus status;
 
-    public Order(int orderId, int userId, String ticker, boolean isBuy, String orderType,
-                 double price, int quantity, double stopPrice, Timestamp timestamp, String status) {
+    public Order(int orderId, int userId, String ticker, boolean isBuy, OrderType orderType,
+                 double price, int quantity, double stopPrice, Timestamp timestamp, OrderStatus status) {
         this.orderId = orderId;
         this.userId = userId;
         this.ticker = ticker;
         this.isBuy = isBuy;
         this.orderType = orderType;
-        this.price = price;
-        this.quantity = quantity;
-        this.stopPrice = stopPrice;
+        setPrice(price);
+        setQuantity(quantity);
+        setStopPrice(stopPrice);
         this.timestamp = timestamp;
         this.status = status;
     }
@@ -40,23 +40,45 @@ public class Order implements Comparable<Order> {
     public boolean isBuy() { return isBuy; }
     public void setBuy(boolean buy) { isBuy = buy; }
 
-    public String getOrderType() { return orderType; }
-    public void setOrderType(String orderType) { this.orderType = orderType; }
+    public OrderType getOrderType() { return orderType; }
+    public void setOrderType(OrderType orderType) {
+        validatePrice(orderType, price);
+        this.orderType = orderType;
+    }
 
     public double getPrice() { return price; }
-    public void setPrice(double price) { this.price = price; }
+    public void setPrice(double price) {
+        validatePrice(orderType, price);
+        this.price = price;
+    }
 
     public int getQuantity() { return quantity; }
-    public void setQuantity(int quantity) { this.quantity = quantity; }
+    public void setQuantity(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero.");
+        }
+        this.quantity = quantity;
+    }
 
     public double getStopPrice() { return stopPrice; }
-    public void setStopPrice(double stopPrice) { this.stopPrice = stopPrice; }
+    public void setStopPrice(double stopPrice) {
+        if (stopPrice < 0) {
+            throw new IllegalArgumentException("Stop price must be greater than or equal to zero.");
+        }
+        this.stopPrice = stopPrice;
+    }
 
     public Timestamp getTimestamp() { return timestamp; }
     public void setTimestamp(Timestamp timestamp) { this.timestamp = timestamp; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public OrderStatus getStatus() { return status; }
+    public void setStatus(OrderStatus status) { this.status = status; }
+
+    private static void validatePrice(OrderType orderType, double price) {
+        if (orderType == OrderType.LIMIT && price <= 0) {
+            throw new IllegalArgumentException("Limit order price must be greater than zero.");
+        }
+    }
 
     @Override
     public int compareTo(Order other) {

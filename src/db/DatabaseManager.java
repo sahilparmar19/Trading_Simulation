@@ -50,11 +50,11 @@ public class DatabaseManager {
             pstmt.setInt(1, order.getUserId());
             pstmt.setString(2, order.getTicker());
             pstmt.setBoolean(3, order.isBuy());
-            pstmt.setString(4, order.getOrderType());
+            pstmt.setString(4, order.getOrderType().name());
             pstmt.setDouble(5, order.getPrice());
             pstmt.setInt(6, order.getQuantity());
             pstmt.setDouble(7, order.getStopPrice());
-            pstmt.setString(8, order.getStatus());
+            pstmt.setString(8, order.getStatus().name());
             pstmt.setTimestamp(9, order.getTimestamp());
 
             rs = pstmt.executeQuery();
@@ -74,14 +74,14 @@ public class DatabaseManager {
     }
 
     // Update order status and quantity
-    public static void updateOrder(int orderId, String status, int quantity) {
+    public static void updateOrder(int orderId, OrderStatus status, int quantity) {
         String sql = "UPDATE orders SET status = ?, quantity = ? WHERE order_id = ?";
         Connection conn = null;
         PreparedStatement pstmt = null;
         try {
             conn = getConnection();
             pstmt = conn.prepareStatement(sql);
-            pstmt.setString(1, status);
+            pstmt.setString(1, status.name());
             pstmt.setInt(2, quantity);
             pstmt.setInt(3, orderId);
             pstmt.executeUpdate();
@@ -651,7 +651,7 @@ public class DatabaseManager {
     // Get pending limit orders for a user
     public static CustomLinkedList<Order> getPendingLimitOrders(int userId) {
         CustomLinkedList<Order> list = new CustomLinkedList<>();
-        String sql = "SELECT * FROM orders WHERE user_id = ? AND order_type = 'LIMIT' AND status = 'PENDING' ORDER BY timestamp DESC";
+        String sql = "SELECT * FROM orders WHERE user_id = ? AND order_type = ? AND status = ? ORDER BY timestamp DESC";
         Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -659,6 +659,8 @@ public class DatabaseManager {
             conn = getConnection();
             pstmt = conn.prepareStatement(sql);
             pstmt.setInt(1, userId);
+            pstmt.setString(2, OrderType.LIMIT.name());
+            pstmt.setString(3, OrderStatus.PENDING.name());
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 list.addLast(new Order(
@@ -666,12 +668,12 @@ public class DatabaseManager {
                     rs.getInt("user_id"),
                     rs.getString("ticker"),
                     rs.getBoolean("is_buy"),
-                    rs.getString("order_type"),
+                    OrderType.valueOf(rs.getString("order_type")),
                     rs.getDouble("price"),
                     rs.getInt("quantity"),
                     rs.getDouble("stop_price"),
                     rs.getTimestamp("timestamp"),
-                    rs.getString("status")
+                    OrderStatus.valueOf(rs.getString("status"))
                 ));
             }
         } catch (SQLException e) {

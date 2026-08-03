@@ -1,6 +1,8 @@
 package ds;
 
 import model.Order;
+import model.OrderStatus;
+import model.OrderType;
 import java.sql.Timestamp;
 
 public class DataStructureTest {
@@ -67,9 +69,9 @@ public class DataStructureTest {
 
 
         // Create sample buy orders
-        Order o1 = new Order(1, 101, "RELIANCE", true, "LIMIT", 100.0, 10, 0.0, now, "PENDING");
-        Order o2 = new Order(2, 102, "RELIANCE", true, "LIMIT", 105.0, 5, 0.0, now, "PENDING");
-        Order o3 = new Order(3, 103, "RELIANCE", true, "LIMIT", 100.0, 15, 0.0, now, "PENDING");
+        Order o1 = new Order(1, 101, "RELIANCE", true, OrderType.LIMIT, 100.0, 10, 0.0, now, OrderStatus.PENDING);
+        Order o2 = new Order(2, 102, "RELIANCE", true, OrderType.LIMIT, 105.0, 5, 0.0, now, OrderStatus.PENDING);
+        Order o3 = new Order(3, 103, "RELIANCE", true, OrderType.LIMIT, 100.0, 15, 0.0, now, OrderStatus.PENDING);
 
 
         // Insert all orders into the Buy Order Book
@@ -86,12 +88,12 @@ public class DataStructureTest {
                 999,
                 "RELIANCE",
                 true,
-                "LIMIT",
+                OrderType.LIMIT,
                 200.0,
                 10,
                 0.0,
                 now,
-                "PENDING"
+                OrderStatus.PENDING
         );
 
         System.out.println("Buy Book size before removing fake order (expected 3): "
@@ -161,12 +163,12 @@ public class DataStructureTest {
                 101,
                 "TCS",
                 true,
-                "LIMIT",
+                OrderType.LIMIT,
                 3000,
                 5,
                 0,
                 now,
-                "PENDING"
+                OrderStatus.PENDING
         );
 
         singleBook.insert(single);
@@ -198,9 +200,9 @@ public class DataStructureTest {
 
         CustomBSTOrderBook testBook = new CustomBSTOrderBook(true);
 
-        Order a = new Order(1,101,"ABC",true,"LIMIT",100,5,0,now,"PENDING");
-        Order b = new Order(2,101,"ABC",true,"LIMIT",90,5,0,now,"PENDING");
-        Order c = new Order(3,101,"ABC",true,"LIMIT",110,5,0,now,"PENDING");
+        Order a = new Order(1,101,"ABC",true,OrderType.LIMIT,100,5,0,now,OrderStatus.PENDING);
+        Order b = new Order(2,101,"ABC",true,OrderType.LIMIT,90,5,0,now,OrderStatus.PENDING);
+        Order c = new Order(3,101,"ABC",true,OrderType.LIMIT,110,5,0,now,OrderStatus.PENDING);
 
         testBook.insert(a);
         testBook.insert(b);
@@ -237,16 +239,16 @@ public class DataStructureTest {
 
         Order d1 = new Order(
                 50,101,"ABC",
-                true,"LIMIT",
+                true,OrderType.LIMIT,
                 100,5,0,
-                now,"PENDING"
+                now,OrderStatus.PENDING
         );
 
         Order d2 = new Order(
                 50,102,"ABC",
-                true,"LIMIT",
+                true,OrderType.LIMIT,
                 120,5,0,
-                now,"PENDING"
+                now,OrderStatus.PENDING
         );
 
         duplicateBook.insert(d1);
@@ -268,9 +270,9 @@ public class DataStructureTest {
 
         CustomBSTOrderBook sellBook = new CustomBSTOrderBook(false);
 
-        Order s1 = new Order(4, 101, "RELIANCE", false, "LIMIT", 100.0, 10, 0.0, now, "PENDING");
-        Order s2 = new Order(5, 102, "RELIANCE", false, "LIMIT", 95.0, 5, 0.0, now, "PENDING");
-        Order s3 = new Order(6, 103, "RELIANCE", false, "LIMIT", 100.0, 15, 0.0, now, "PENDING");
+        Order s1 = new Order(4, 101, "RELIANCE", false, OrderType.LIMIT, 100.0, 10, 0.0, now, OrderStatus.PENDING);
+        Order s2 = new Order(5, 102, "RELIANCE", false, OrderType.LIMIT, 95.0, 5, 0.0, now, OrderStatus.PENDING);
+        Order s3 = new Order(6, 103, "RELIANCE", false, OrderType.LIMIT, 100.0, 15, 0.0, now, OrderStatus.PENDING);
 
 
         // Insert Sell Orders

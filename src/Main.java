@@ -13,6 +13,8 @@ import engine.OrderBook;
 import engine.StopLossMonitor;
 import io.ReportGenerator;
 import model.Order;
+import model.OrderStatus;
+import model.OrderType;
 import model.Stock;
 import model.User;
 
@@ -80,34 +82,37 @@ public class Main {
     }
 
     private static void loadPendingOrders() {
-        String sql = "SELECT * FROM orders WHERE status = 'PENDING'";
+        String sql = "SELECT * FROM orders WHERE status = ?";
         int count = 0;
         try (Connection conn = DatabaseManager.getConnection();
-                PreparedStatement pstmt = conn.prepareStatement(sql);
-                ResultSet rs = pstmt.executeQuery()) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            while (rs.next()) {
-                Order order = new Order(
-                        rs.getInt("order_id"),
-                        rs.getInt("user_id"),
-                        rs.getString("ticker"),
-                        rs.getBoolean("is_buy"),
-                        rs.getString("order_type"),
-                        rs.getDouble("price"),
-                        rs.getInt("quantity"),
-                        rs.getDouble("stop_price"),
-                        rs.getTimestamp("timestamp"),
-                        rs.getString("status"));
+            pstmt.setString(1, OrderStatus.PENDING.name());
+            try (ResultSet rs = pstmt.executeQuery()) {
 
-                OrderBook book = OrderBook.get(order.getTicker());
-                synchronized (book) {
-                    if (order.isBuy()) {
-                        book.getBuySide().insert(order);
-                    } else {
-                        book.getSellSide().insert(order);
+                while (rs.next()) {
+                    Order order = new Order(
+                            rs.getInt("order_id"),
+                            rs.getInt("user_id"),
+                            rs.getString("ticker"),
+                            rs.getBoolean("is_buy"),
+                            OrderType.valueOf(rs.getString("order_type")),
+                            rs.getDouble("price"),
+                            rs.getInt("quantity"),
+                            rs.getDouble("stop_price"),
+                            rs.getTimestamp("timestamp"),
+                            OrderStatus.valueOf(rs.getString("status")));
+
+                    OrderBook book = OrderBook.get(order.getTicker());
+                    synchronized (book) {
+                        if (order.isBuy()) {
+                            book.getBuySide().insert(order);
+                        } else {
+                            book.getSellSide().insert(order);
+                        }
                     }
+                    count++;
                 }
-                count++;
             }
             System.out.println("Loaded " + count + " pending orders from database into memory order books.");
         } catch (SQLException e) {
@@ -403,11 +408,11 @@ public class Main {
         System.out.print(" Select (1-2): ");
         String typeChoice = scanner.nextLine().trim();
 
-        String type = "LIMIT";
+        OrderType type = OrderType.LIMIT;
         double price = 0.0;
 
         if (typeChoice.equals("1")) {
-            type = "LIMIT";
+            type = OrderType.LIMIT;
             // Show current market price before asking for limit price
             System.out.printf(" Current Market Price: ₹%.2f%n", stock.getCurrentPrice());
             System.out.print(" Enter Limit Price (INR): ");
@@ -420,7 +425,7 @@ public class Main {
                 return;
             }
         } else if (typeChoice.equals("2")) {
-            type = "MARKET";
+            type = OrderType.MARKET;
             // Set price parameter based on Buy/Sell to match top of opposite book
             price = isBuy ? 9999999.99 : 0.0;
         } else {
@@ -438,7 +443,7 @@ public class Main {
                 qty,
                 0.0,
                 new Timestamp(System.currentTimeMillis()),
-                "PENDING");
+                OrderStatus.PENDING);
 
         int id = DatabaseManager.insertOrder(order);
         if (id != -1) {

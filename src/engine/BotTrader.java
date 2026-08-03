@@ -3,6 +3,8 @@ package engine;
 import auth.AuthManager;
 import db.DatabaseManager;
 import model.Order;
+import model.OrderStatus;
+import model.OrderType;
 import model.Stock;
 import ds.CustomLinkedList;
 
@@ -80,12 +82,12 @@ public class BotTrader extends Thread {
                     botUserId, 
                     ticker, 
                     isBuy, 
-                    "LIMIT", 
+                    OrderType.LIMIT,
                     price, 
                     qty, 
                     0.0, 
                     new Timestamp(System.currentTimeMillis()), 
-                    "PENDING"
+                    OrderStatus.PENDING
                 );
 
                 // Insert into DB to get order ID
