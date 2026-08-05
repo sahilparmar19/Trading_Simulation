@@ -24,7 +24,7 @@ public class WatchlistView {
             System.out.println("\n=================================================================");
             System.out.println("                         MY WATCHLIST");
             System.out.println("=================================================================");
-            CustomLinkedList<Stock> watchlist = DatabaseManager.getWatchlist(userId);
+            CustomLinkedList watchlist = DatabaseManager.getWatchlist(userId);
 
             if (watchlist.size() == 0) {
                 System.out.println(" Your watchlist is currently empty.");
@@ -32,7 +32,8 @@ public class WatchlistView {
             } else {
                 System.out.printf("%-10s | %-32s | %-12s%n", "Ticker", "Company Name", "Current Price");
                 System.out.println("-----------------------------------------------------------------");
-                for (Stock stock : watchlist) {
+                for (int i = 0; i < watchlist.size(); i++) {
+                    Stock stock = (Stock) watchlist.get(i);
                     System.out.printf("%-10s | %-32s | ₹%-12.2f%n",
                             stock.getTicker(), stock.getCompanyName(), stock.getCurrentPrice());
                 }
@@ -112,20 +113,21 @@ public class WatchlistView {
         }
 
         if (!isBuy) {
-            CustomLinkedList<DatabaseManager.PortfolioHolding> portfolio = DatabaseManager.getPortfolio(Session.getCurrentUser().getUserId());
+            CustomLinkedList portfolio = DatabaseManager.getPortfolio(Session.getCurrentUser().getUserId());
             int ownedQty = 0;
-            for (DatabaseManager.PortfolioHolding holding : portfolio) {
+            for (int i = 0; i < portfolio.size(); i++) {
+                DatabaseManager.PortfolioHolding holding = (DatabaseManager.PortfolioHolding) portfolio.get(i);
                 if (holding.ticker.equalsIgnoreCase(stock.getTicker())) {
                     ownedQty = holding.quantity;
                     break;
                 }
             }
             if (ownedQty < qty) {
-                System.out.println("You do not hold enough shares of " + stock.getTicker() + " to sell. Owned: " + ownedQty + ", Requested: " + qty);
+                System.out.println("You do not hold enough shares of " + stock.getTicker()
+                        + " to sell. Owned: " + ownedQty + ", Requested: " + qty);
                 return;
             }
         }
-
 
         System.out.println(" Order Type:");
         System.out.println("  [1] LIMIT Order");
@@ -148,16 +150,12 @@ public class WatchlistView {
             }
         } else if (typeChoice.equals("2")) {
             type = "MARKET";
-            // For market orders in limit book:
-            // Buy: set price to very high so it matches lowest ask
-            // Sell: set price to 0.0 so it matches highest bid
             price = isBuy ? 9999999.99 : 0.0;
         } else {
             System.out.println("Invalid option.");
             return;
         }
 
-        // Place order
         Order order = new Order(
             0,
             Session.getCurrentUser().getUserId(),

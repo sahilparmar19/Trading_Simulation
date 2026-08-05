@@ -57,7 +57,7 @@ public class StockDetailView {
     }
 
     private static void showHistoryAndTrend(String ticker, String period) {
-        CustomLinkedList<PriceHistory> history = DatabaseManager.getPriceHistory(ticker, period);
+        CustomLinkedList history = DatabaseManager.getPriceHistory(ticker, period);
         if (history.size() == 0) {
             System.out.println("No price history records found for this period.");
             return;
@@ -65,11 +65,14 @@ public class StockDetailView {
 
         double min = Double.MAX_VALUE;
         double max = Double.MIN_VALUE;
-        double firstPrice = history.get(0).getPrice();
-        double lastPrice = history.get(history.size() - 1).getPrice();
+        PriceHistory first = (PriceHistory) history.get(0);
+        PriceHistory last  = (PriceHistory) history.get(history.size() - 1);
+        double firstPrice = first.getPrice();
+        double lastPrice  = last.getPrice();
 
         System.out.println("\n--- Historical Prices ---");
-        for (PriceHistory record : history) {
+        for (int i = 0; i < history.size(); i++) {
+            PriceHistory record = (PriceHistory) history.get(i);
             double price = record.getPrice();
             if (price < min) min = price;
             if (price > max) max = price;
@@ -96,8 +99,7 @@ public class StockDetailView {
         while (true) {
             System.out.println("\n--- STOCK SEARCH ---");
 
-            // Display all sectors
-            CustomLinkedList<DatabaseManager.SectorInfo> sectors = DatabaseManager.getAllSectors();
+            CustomLinkedList sectors = DatabaseManager.getAllSectors();
             if (sectors.size() == 0) {
                 System.out.println("No sectors found.");
                 return;
@@ -105,7 +107,7 @@ public class StockDetailView {
 
             System.out.println(" Select a Sector:");
             for (int i = 0; i < sectors.size(); i++) {
-                DatabaseManager.SectorInfo sec = sectors.get(i);
+                DatabaseManager.SectorInfo sec = (DatabaseManager.SectorInfo) sectors.get(i);
                 System.out.printf("  [%d] %s%n", i + 1, sec.sectorName);
             }
             System.out.printf("  [%d] Go Back%n", sectors.size() + 1);
@@ -128,11 +130,11 @@ public class StockDetailView {
                 continue;
             }
 
-            DatabaseManager.SectorInfo selectedSector = sectors.get(sectorIndex - 1);
+            DatabaseManager.SectorInfo selectedSector = (DatabaseManager.SectorInfo) sectors.get(sectorIndex - 1);
 
             // Display stocks in the selected sector
             while (true) {
-                CustomLinkedList<Stock> stocks = DatabaseManager.getStocksBySectorId(selectedSector.sectorId);
+                CustomLinkedList stocks = DatabaseManager.getStocksBySectorId(selectedSector.sectorId);
                 System.out.println("\n--- Stocks in " + selectedSector.sectorName + " ---");
 
                 if (stocks.size() == 0) {
@@ -140,10 +142,11 @@ public class StockDetailView {
                     break;
                 }
 
-                System.out.printf(" %-5s | %-10s | %-32s | %-14s | %-10s%n", "No.", "Ticker", "Company Name", "Current Price", "Change (%)");
+                System.out.printf(" %-5s | %-10s | %-32s | %-14s | %-10s%n",
+                        "No.", "Ticker", "Company Name", "Current Price", "Change (%)");
                 System.out.println(" ---------------------------------------------------------------------------------");
                 for (int i = 0; i < stocks.size(); i++) {
-                    Stock s = stocks.get(i);
+                    Stock s = (Stock) stocks.get(i);
                     double change = 0.0;
                     if (s.getPrevClose() > 0) {
                         change = ((s.getCurrentPrice() - s.getPrevClose()) / s.getPrevClose()) * 100.0;
@@ -171,39 +174,23 @@ public class StockDetailView {
                     continue;
                 }
 
-                Stock selectedStock = stocks.get(stockIndex - 1);
+                Stock selectedStock = (Stock) stocks.get(stockIndex - 1);
                 render(selectedStock.getTicker(), scanner);
             }
         }
     }
 
-    // Bubble sort stocks by price
-    private static void sortStocks(CustomLinkedList<Stock> list, boolean ascending) {
+    // Bubble sort stocks by price (sem 2 DS concept: sorting using array + swap)
+    private static void sortStocks(CustomLinkedList list, boolean ascending) {
         int n = list.size();
-        for (int i = 0; i < n - 1; i++) {
-            for (int j = 0; j < n - i - 1; j++) {
-                Stock s1 = list.get(j);
-                Stock s2 = list.get(j + 1);
-                boolean swap = false;
-                if (ascending && s1.getCurrentPrice() > s2.getCurrentPrice()) {
-                    swap = true;
-                } else if (!ascending && s1.getCurrentPrice() < s2.getCurrentPrice()) {
-                    swap = true;
-                }
 
-                if (swap) {
-                    // swap j and j+1 values
-                    list.remove(s1);
-                    list.addLast(s1); // wait! list.remove and list.addLast is not a safe swap in index-based get unless we reconstruct.
-                    // Let's implement a simpler list swap or just convert to array, sort, and reconstruct list!
-                    // This is much safer and cleaner.
-                }
-            }
+        // Step 1: Copy linked list elements into a plain array using index-based get()
+        Stock[] arr = new Stock[n];
+        for (int i = 0; i < n; i++) {
+            arr[i] = (Stock) list.get(i);
         }
-        
-        // Let's use array-based sorting which is 100% correct and clean:
-        Stock[] arr = new Stock[list.size()];
-        list.toArray(arr);
+
+        // Step 2: Bubble sort the array by current price
         for (int i = 0; i < arr.length - 1; i++) {
             for (int j = 0; j < arr.length - i - 1; j++) {
                 boolean swap = false;
@@ -219,12 +206,13 @@ public class StockDetailView {
                 }
             }
         }
-        // Rebuild list
-        while (list.size() > 0) {
+
+        // Step 3: Rebuild linked list in sorted order
+        while (!list.isEmpty()) {
             list.remove(list.get(0));
         }
-        for (Stock stock : arr) {
-            list.addLast(stock);
+        for (int i = 0; i < arr.length; i++) {
+            list.addLast(arr[i]);
         }
     }
 }

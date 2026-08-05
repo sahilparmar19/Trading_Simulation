@@ -77,7 +77,7 @@ public class ReportGenerator {
 
     public static String exportPortfolio(int userId) {
         String filePath = "reports/user_" + userId + "_portfolio.csv";
-        CustomLinkedList<DatabaseManager.PortfolioHolding> holdings = DatabaseManager.getPortfolio(userId);
+        CustomLinkedList holdings = DatabaseManager.getPortfolio(userId);
 
         FileWriter fw = null;
         PrintWriter pw = null;
@@ -87,7 +87,8 @@ public class ReportGenerator {
 
             pw.println("Company,Ticker,Qty,Avg Buy Price,Current Price,P&L (INR),P&L (%)");
 
-            for (DatabaseManager.PortfolioHolding holding : holdings) {
+            for (int i = 0; i < holdings.size(); i++) {
+                DatabaseManager.PortfolioHolding holding = (DatabaseManager.PortfolioHolding) holdings.get(i);
                 pw.printf("\"%s\",%s,%d,%.2f,%.2f,%.2f,%.2f%%%n",
                         holding.companyName, holding.ticker, holding.quantity,
                         holding.avgBuyPrice, holding.currentPrice,

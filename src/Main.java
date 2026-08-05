@@ -42,6 +42,7 @@ public class Main {
         StopLossMonitor stopLossMonitor = new StopLossMonitor();
         stopLossMonitor.start();
 
+
         // Start 3 BotTrader threads
         BotTrader bot1 = new BotTrader("bot1");
         BotTrader bot2 = new BotTrader("bot2");
@@ -278,7 +279,7 @@ public class Main {
      */
     private static Stock selectStockFromSectors(Scanner scanner) {
         // Display all sectors
-        CustomLinkedList<DatabaseManager.SectorInfo> sectors = DatabaseManager.getAllSectors();
+        CustomLinkedList sectors = DatabaseManager.getAllSectors();
         if (sectors.size() == 0) {
             System.out.println("No sectors found.");
             return null;
@@ -286,7 +287,7 @@ public class Main {
 
         System.out.println(" Select a Sector:");
         for (int i = 0; i < sectors.size(); i++) {
-            DatabaseManager.SectorInfo sec = sectors.get(i);
+            DatabaseManager.SectorInfo sec = (DatabaseManager.SectorInfo) sectors.get(i);
             System.out.printf("  [%d] %s%n", i + 1, sec.sectorName);
         }
         System.out.printf("  [%d] Go Back%n", sectors.size() + 1);
@@ -309,10 +310,10 @@ public class Main {
             return null;
         }
 
-        DatabaseManager.SectorInfo selectedSector = sectors.get(sectorIndex - 1);
+        DatabaseManager.SectorInfo selectedSector = (DatabaseManager.SectorInfo) sectors.get(sectorIndex - 1);
 
         // Display stocks in the selected sector
-        CustomLinkedList<Stock> stocks = DatabaseManager.getStocksBySectorId(selectedSector.sectorId);
+        CustomLinkedList stocks = DatabaseManager.getStocksBySectorId(selectedSector.sectorId);
         System.out.println("\n--- Stocks in " + selectedSector.sectorName + " ---");
 
         if (stocks.size() == 0) {
@@ -323,7 +324,7 @@ public class Main {
         System.out.printf(" %-5s | %-10s | %-32s | %-14s | %-10s%n", "No.", "Ticker", "Company Name", "Current Price", "Change (%)");
         System.out.println(" ---------------------------------------------------------------------------------");
         for (int i = 0; i < stocks.size(); i++) {
-            Stock s = stocks.get(i);
+            Stock s = (Stock) stocks.get(i);
             double change = 0.0;
             if (s.getPrevClose() > 0) {
                 change = ((s.getCurrentPrice() - s.getPrevClose()) / s.getPrevClose()) * 100.0;
@@ -351,7 +352,7 @@ public class Main {
             return null;
         }
 
-        return stocks.get(stockIndex - 1);
+        return (Stock) stocks.get(stockIndex - 1);
     }
 
     private static void placeOrderFlow(boolean isBuy, Scanner scanner) {
@@ -381,10 +382,11 @@ public class Main {
         }
 
         if (!isBuy) {
-            CustomLinkedList<DatabaseManager.PortfolioHolding> portfolio = DatabaseManager
+            CustomLinkedList portfolio = DatabaseManager
                     .getPortfolio(Session.getCurrentUser().getUserId());
             int ownedQty = 0;
-            for (DatabaseManager.PortfolioHolding holding : portfolio) {
+            for (int i = 0; i < portfolio.size(); i++) {
+                DatabaseManager.PortfolioHolding holding = (DatabaseManager.PortfolioHolding) portfolio.get(i);
                 if (holding.ticker.equalsIgnoreCase(ticker)) {
                     ownedQty = holding.quantity;
                     break;
@@ -467,9 +469,10 @@ public class Main {
             return;
         }
        // Check if user owns the stock
-        CustomLinkedList<DatabaseManager.PortfolioHolding> portfolio = DatabaseManager.getPortfolio(userId);
+        CustomLinkedList portfolio = DatabaseManager.getPortfolio(userId);
         int ownedQty = 0;
-        for (DatabaseManager.PortfolioHolding holding : portfolio) {
+        for (int i = 0; i < portfolio.size(); i++) {
+            DatabaseManager.PortfolioHolding holding = (DatabaseManager.PortfolioHolding) portfolio.get(i);
             if (holding.ticker.equalsIgnoreCase(ticker)) {
                 ownedQty = holding.quantity;
                 break;
@@ -525,7 +528,7 @@ public class Main {
         int userId = Session.getCurrentUser().getUserId();
         System.out.println("\n--- YOUR PENDING LIMIT ORDERS ---");
 
-        CustomLinkedList<Order> orders = DatabaseManager.getPendingLimitOrders(userId);
+        CustomLinkedList orders = DatabaseManager.getPendingLimitOrders(userId);
         if (orders.size() == 0) {
             System.out.println("No pending limit orders found.");
             return;
@@ -534,11 +537,10 @@ public class Main {
         System.out.printf(" %-10s | %-10s | %-8s | %-14s | %-10s | %-20s%n",
                 "Order ID", "Ticker", "Side", "Limit Price", "Quantity", "Placed At");
         System.out.println(" ------------------------------------------------------------------------------------");
-        for (Order o : orders) {
+        for (int i = 0; i < orders.size(); i++) {
+            Order o = (Order) orders.get(i);
             String side = o.isBuy() ? "BUY" : "SELL";
-            // Fetch current price for comparison
             Stock stock = DatabaseManager.getStock(o.getTicker());
-            String currentPriceStr = (stock != null) ? String.format("₹%.2f", stock.getCurrentPrice()) : "N/A";
             System.out.printf(" %-10d | %-10s | %-8s | ₹%-13.2f | %-10d | %s%n",
                     o.getOrderId(), o.getTicker(), side, o.getPrice(), o.getQuantity(),
                     o.getTimestamp().toString());
@@ -546,7 +548,8 @@ public class Main {
 
         // Show a summary with current prices
         System.out.println("\n Current Market Prices:");
-        for (Order o : orders) {
+        for (int i = 0; i < orders.size(); i++) {
+            Order o = (Order) orders.get(i);
             Stock stock = DatabaseManager.getStock(o.getTicker());
             if (stock != null) {
                 double diff = o.isBuy()

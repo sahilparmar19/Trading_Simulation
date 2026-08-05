@@ -2,14 +2,14 @@ package engine;
 
 import ds.CustomBSTOrderBook;
 import ds.CustomLinkedList;
-import model.Order;
 
 public class OrderBook {
     private final String ticker;
     private final CustomBSTOrderBook buySide;
     private final CustomBSTOrderBook sellSide;
 
-    private static final CustomLinkedList<OrderBook> orderBooks = new CustomLinkedList<>();
+    // Static registry — stores all OrderBook objects (one per ticker)
+    private static final CustomLinkedList orderBooks = new CustomLinkedList();
 
     public OrderBook(String ticker) {
         this.ticker = ticker;
@@ -29,19 +29,22 @@ public class OrderBook {
         return sellSide;
     }
 
-    // Static registry for thread-safe lookups
+    // Static registry: find OrderBook by ticker, or create a new one
     public static synchronized OrderBook get(String ticker) {
-        for (OrderBook ob : orderBooks) {
+        // Search through existing order books
+        for (int i = 0; i < orderBooks.size(); i++) {
+            OrderBook ob = (OrderBook) orderBooks.get(i);
             if (ob.getTicker().equalsIgnoreCase(ticker)) {
                 return ob;
             }
         }
+        // Not found — create a new one and add to registry
         OrderBook newOb = new OrderBook(ticker.toUpperCase());
         orderBooks.addLast(newOb);
         return newOb;
     }
 
-    public static synchronized CustomLinkedList<OrderBook> getAll() {
+    public static synchronized CustomLinkedList getAll() {
         return orderBooks;
     }
 }

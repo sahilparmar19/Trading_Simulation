@@ -17,7 +17,7 @@ public class PortfolioView {
 
         int userId = Session.getCurrentUser().getUserId();
         double balance = DatabaseManager.getUserBalance(userId);
-        CustomLinkedList<DatabaseManager.PortfolioHolding> holdings = DatabaseManager.getPortfolio(userId);
+        CustomLinkedList holdings = DatabaseManager.getPortfolio(userId);
 
         System.out.println("\n=========================================================================");
         System.out.printf(" PORTFOLIO VIEW - User: %s%n", Session.getCurrentUser().getName());
@@ -35,7 +35,8 @@ public class PortfolioView {
             double totalCurrentVal = 0;
             double totalPnL = 0;
 
-            for (DatabaseManager.PortfolioHolding holding : holdings) {
+            for (int i = 0; i < holdings.size(); i++) {
+                DatabaseManager.PortfolioHolding holding = (DatabaseManager.PortfolioHolding) holdings.get(i);
                 totalCostVal += holding.avgBuyPrice * holding.quantity;
                 totalCurrentVal += holding.currentPrice * holding.quantity;
                 totalPnL += holding.getPnL();

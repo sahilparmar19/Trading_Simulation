@@ -226,8 +226,8 @@ public class DatabaseManager {
     }
 
     // Get user portfolio holdings
-    public static CustomLinkedList<PortfolioHolding> getPortfolio(int userId) {
-        CustomLinkedList<PortfolioHolding> holdings = new CustomLinkedList<>();
+    public static CustomLinkedList getPortfolio(int userId) {
+        CustomLinkedList holdings = new CustomLinkedList();
         String sql = "SELECT p.ticker, s.company_name, p.quantity, p.avg_buy_price, s.current_price " +
                      "FROM portfolio p JOIN stocks s ON p.ticker = s.ticker WHERE p.user_id = ?";
         Connection conn = null;
@@ -281,8 +281,8 @@ public class DatabaseManager {
     }
 
     // Search stocks by name
-    public static CustomLinkedList<Stock> getStocksByName(String name) {
-        CustomLinkedList<Stock> list = new CustomLinkedList<>();
+    public static CustomLinkedList getStocksByName(String name) {
+        CustomLinkedList list = new CustomLinkedList();
         String sql = "SELECT s.* FROM stocks s WHERE LOWER(s.company_name) LIKE ? OR LOWER(s.ticker) LIKE ? AND s.is_listed = TRUE";
         Connection conn = null;
         PreparedStatement pstmt = null;
@@ -307,8 +307,8 @@ public class DatabaseManager {
     }
 
     // Search stocks by sector name
-    public static CustomLinkedList<Stock> getStocksBySector(String sectorName) {
-        CustomLinkedList<Stock> list = new CustomLinkedList<>();
+    public static CustomLinkedList getStocksBySector(String sectorName) {
+        CustomLinkedList list = new CustomLinkedList();
         String sql = "SELECT s.* FROM stocks s JOIN sectors sec ON s.sector_id = sec.sector_id " +
                      "WHERE LOWER(sec.sector_name) LIKE ? AND s.is_listed = TRUE";
         Connection conn = null;
@@ -333,8 +333,8 @@ public class DatabaseManager {
     }
 
     // Get all sector names (sector_id -> sector_name)
-    public static CustomLinkedList<SectorInfo> getAllSectors() {
-        CustomLinkedList<SectorInfo> list = new CustomLinkedList<>();
+    public static CustomLinkedList getAllSectors() {
+        CustomLinkedList list = new CustomLinkedList();
         String sql = "SELECT sector_id, sector_name FROM sectors ORDER BY sector_id ASC";
         Connection conn = null;
         PreparedStatement pstmt = null;
@@ -357,8 +357,8 @@ public class DatabaseManager {
     }
 
     // Get all listed stocks under a specific sector ID
-    public static CustomLinkedList<Stock> getStocksBySectorId(int sectorId) {
-        CustomLinkedList<Stock> list = new CustomLinkedList<>();
+    public static CustomLinkedList getStocksBySectorId(int sectorId) {
+        CustomLinkedList list = new CustomLinkedList();
         String sql = "SELECT s.* FROM stocks s WHERE s.sector_id = ? AND s.is_listed = TRUE ORDER BY s.ticker ASC";
         Connection conn = null;
         PreparedStatement pstmt = null;
@@ -405,8 +405,8 @@ public class DatabaseManager {
     }
 
     // Get price history with period filter (7D / 1M / 6M / 52W)
-    public static CustomLinkedList<PriceHistory> getPriceHistory(String ticker, String period) {
-        CustomLinkedList<PriceHistory> history = new CustomLinkedList<>();
+    public static CustomLinkedList getPriceHistory(String ticker, String period) {
+        CustomLinkedList history = new CustomLinkedList();
 
         // Compute cutoff time in Java — avoids JDBC INTERVAL casting issues
         long nowMs = System.currentTimeMillis();
@@ -452,8 +452,8 @@ public class DatabaseManager {
 
 
     // Get top gainers
-    public static CustomLinkedList<Stock> getTopGainers(int n) {
-        CustomLinkedList<Stock> list = new CustomLinkedList<>();
+    public static CustomLinkedList getTopGainers(int n) {
+        CustomLinkedList list = new CustomLinkedList();
         String sql = "SELECT *, ((current_price - prev_close) / prev_close * 100) AS pct_change " +
                      "FROM stocks WHERE is_listed = TRUE AND prev_close > 0 ORDER BY pct_change DESC LIMIT ?";
         Connection conn = null;
@@ -478,8 +478,8 @@ public class DatabaseManager {
     }
 
     // Get top losers
-    public static CustomLinkedList<Stock> getTopLosers(int n) {
-        CustomLinkedList<Stock> list = new CustomLinkedList<>();
+    public static CustomLinkedList getTopLosers(int n) {
+        CustomLinkedList list = new CustomLinkedList();
         String sql = "SELECT *, ((current_price - prev_close) / prev_close * 100) AS pct_change " +
                      "FROM stocks WHERE is_listed = TRUE AND prev_close > 0 ORDER BY pct_change ASC LIMIT ?";
         Connection conn = null;
@@ -504,8 +504,8 @@ public class DatabaseManager {
     }
 
     // Average P&L grouped by sector
-    public static CustomLinkedList<SectorPnL> getSectorPnL() {
-        CustomLinkedList<SectorPnL> list = new CustomLinkedList<>();
+    public static CustomLinkedList getSectorPnL() {
+        CustomLinkedList list = new CustomLinkedList();
         String sql = "SELECT sec.sector_name, " +
                      "COALESCE(AVG((s.current_price - p.avg_buy_price) * p.quantity), 0) AS avg_pnl, " +
                      "COALESCE(AVG(((s.current_price - p.avg_buy_price) / p.avg_buy_price) * 100), 0) AS avg_pnl_pct " +
@@ -574,8 +574,8 @@ public class DatabaseManager {
         }
     }
 
-    public static CustomLinkedList<Stock> getWatchlist(int userId) {
-        CustomLinkedList<Stock> list = new CustomLinkedList<>();
+    public static CustomLinkedList getWatchlist(int userId) {
+        CustomLinkedList list = new CustomLinkedList();
         String sql = "SELECT s.* FROM watchlist w JOIN stocks s ON w.ticker = s.ticker WHERE w.user_id = ?";
         Connection conn = null;
         PreparedStatement pstmt = null;
@@ -649,8 +649,8 @@ public class DatabaseManager {
     }
 
     // Get pending limit orders for a user
-    public static CustomLinkedList<Order> getPendingLimitOrders(int userId) {
-        CustomLinkedList<Order> list = new CustomLinkedList<>();
+    public static CustomLinkedList getPendingLimitOrders(int userId) {
+        CustomLinkedList list = new CustomLinkedList();
         String sql = "SELECT * FROM orders WHERE user_id = ? AND order_type = 'LIMIT' AND status = 'PENDING' ORDER BY timestamp DESC";
         Connection conn = null;
         PreparedStatement pstmt = null;
