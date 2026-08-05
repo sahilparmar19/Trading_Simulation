@@ -12,36 +12,22 @@ public class AuthManager {
      *
      * Java Concept (Sem 2 - Strings & Loops):
      *   - Iterates over each character of the password
-     *   - Mixes position, ASCII value, and a fixed salt number
-     *   - Converts result to a hex-like string
+     *   - Multiplies a running total by 31 (standard mixing trick)
+     *   - Adds the character's ASCII value and its position
+     *   - Returns the result as a plain number string
      *
-     * Note: This is a custom hash for learning purposes.
-     *       Real systems use SHA-256 or bcrypt (not in Sem 2 syllabus).
+     * Note: This is a simple hash for learning purposes, not for real security.
      */
     public static String hashPassword(String password) {
-        int salt = 31;          // mixing constant (like in Java's String.hashCode)
-        long hash = 5381;       // starting seed value
+        long hash = 0;
 
         for (int i = 0; i < password.length(); i++) {
             char c = password.charAt(i);
-            // Mix: multiply hash, add char value, mix with position
-            hash = (hash * salt) + (int) c + (i + 1);
+            hash = (hash * 31) + (int) c + (i + 1);
         }
 
-        // Convert to a fixed-length hex string (always 16 characters)
-        String hex = Long.toHexString(Math.abs(hash));
-
-        // Pad with zeros if shorter than 16 characters
-        while (hex.length() < 16) {
-            hex = "0" + hex;
-        }
-
-        // Keep only last 16 characters if too long
-        if (hex.length() > 16) {
-            hex = hex.substring(hex.length() - 16);
-        }
-
-        return hex;
+        // Same password always gives same number — store it as a string
+        return String.valueOf(hash);
     }
 
     public static boolean signUp(String username, String password, String name) {
