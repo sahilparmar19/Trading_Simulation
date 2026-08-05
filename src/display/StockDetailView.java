@@ -71,12 +71,20 @@ public class StockDetailView {
         double lastPrice  = last.getPrice();
 
         System.out.println("\n--- Historical Prices ---");
-        for (int i = 0; i < history.size(); i++) {
+        int size = history.size();
+        
+        for (int i = 0; i < size; i++) {
             PriceHistory record = (PriceHistory) history.get(i);
             double price = record.getPrice();
             if (price < min) min = price;
             if (price > max) max = price;
-            System.out.printf("  [%s] ₹%.2f%n", record.getRecordedAt().toString(), price);
+            
+            // Prevent console spam if there are thousands of bot trades
+            if (size <= 15 || i < 5 || i >= size - 5) {
+                System.out.printf("  [%s] ₹%.2f%n", record.getRecordedAt().toString(), price);
+            } else if (i == 5) {
+                System.out.printf("  ... [%d more records hidden] ...%n", size - 10);
+            }
         }
 
         double diff = lastPrice - firstPrice;

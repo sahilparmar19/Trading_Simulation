@@ -7,10 +7,10 @@
 --
 --  Option A — Create DB then import (Recommended):
 --    psql -U postgres -c "CREATE DATABASE tradingdb;"
---    psql -U postgres -d tradingdb -f trading_simulation_export.sql
+--    psql -U postgres -d tradingdb -f tradingdb.sql
 --
 --  Option B — One liner:
---    psql -U postgres -c "DROP DATABASE IF EXISTS tradingdb; CREATE DATABASE tradingdb;" && psql -U postgres -d tradingdb -f trading_simulation_export.sql
+--    psql -U postgres -c "DROP DATABASE IF EXISTS tradingdb; CREATE DATABASE tradingdb;" && psql -U postgres -d tradingdb -f tradingdb.sql
 --
 --  Default login credentials in the app (config.properties):
 --    db.url      = jdbc:postgresql://localhost:5432/tradingdb
@@ -247,19 +247,21 @@ INSERT INTO stocks (ticker, company_name, sector_id, current_price, open_price, 
 ('BIOCON',   'Biocon Limited',                    5,  260.00,  258.00,  257.00,  310000.00, 35.50, 2.40, 0.0700, 0.0300, 1200000, 60.60, 19.40, 20.00, TRUE, 'NSE');
 
 -- ----- Users -----
--- Passwords (Custom hash):
---   adminpassword   -> 0a6506ccf4274e0c
---   alicepassword   -> 0d2af0bfee01203d
---   bobpassword     -> 6a94eeed9c15f531
---   charliepassword -> 1deb414da3517f90
+-- Passwords (Custom hash for the new AuthManager):
+--   admin -> 92668751
+--   alice -> 92903629
+--   bob   -> 97523
+--   charlie -> 735284347
+--   user -> 8583459338721351917
 INSERT INTO users (user_id, username, password_hash, name, balance, is_admin, created_at) VALUES
-(1, 'admin',   '0a6506ccf4274e0c', 'System Administrator', 1000000.00, TRUE,  NOW() - INTERVAL '10 days'),
-(2, 'alice',   '0d2af0bfee01203d', 'Alice Sharma',          150000.00, FALSE, NOW() - INTERVAL '5 days'),
-(3, 'bob',     '6a94eeed9c15f531', 'Bob Patel',              85000.00, FALSE, NOW() - INTERVAL '4 days'),
-(4, 'charlie', '1deb414da3517f90', 'Charlie Sen',           200000.00, FALSE, NOW() - INTERVAL '3 days');
+(1, 'admin',   '92668751', 'System Administrator', 1000000.00, TRUE,  NOW() - INTERVAL '10 days'),
+(2, 'alice',   '92903629', 'Alice Sharma',          150000.00, FALSE, NOW() - INTERVAL '5 days'),
+(3, 'bob',     '97523',    'Bob Patel',              85000.00, FALSE, NOW() - INTERVAL '4 days'),
+(4, 'charlie', '735284347', 'Charlie Sen',           200000.00, FALSE, NOW() - INTERVAL '3 days'),
+(5, 'user',    '8583459338721351917', 'Default User', 500000.00, FALSE, NOW() - INTERVAL '1 day');
 
 -- Keep sequence in sync with hardcoded IDs
-SELECT setval('users_user_id_seq', 4);
+SELECT setval('users_user_id_seq', 5);
 
 -- ----- Portfolio -----
 INSERT INTO portfolio (user_id, ticker, quantity, avg_buy_price) VALUES
