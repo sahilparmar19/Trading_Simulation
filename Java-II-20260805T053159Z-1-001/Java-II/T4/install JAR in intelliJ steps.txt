@@ -1,2 +1,0 @@
-Create New Project
-Go to File> Project Structure > Library > + button > java > select .jar > Appply and OK
