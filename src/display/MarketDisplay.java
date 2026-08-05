@@ -46,7 +46,7 @@ public class MarketDisplay {
         }
     }
 
-    public static void showStocksBySector(Scanner scanner) {
+    public static void showStocksBySector(Scanner sc) {
         System.out.println("\n--- VIEW STOCKS BY SECTOR ---");
 
         CustomLinkedList sectors = DatabaseManager.getAllSectors();
@@ -63,7 +63,7 @@ public class MarketDisplay {
         System.out.print(" Enter Sector ID: ");
         int sectorId;
         try {
-            sectorId = Integer.parseInt(scanner.nextLine().trim());
+            sectorId = Integer.parseInt(sc.nextLine().trim());
         } catch (NumberFormatException e) {
             System.out.println("Invalid input.");
             return;
@@ -96,7 +96,7 @@ public class MarketDisplay {
      * Shows live stock prices for a selected sector, refreshing every 3 seconds.
      * User can press Enter to return to the previous menu.
      */
-    public static void showLiveStocksBySector(Scanner scanner) {
+    public static void showLiveStocksBySector(Scanner sc) {
         System.out.println("\n--- VIEW LIVE STOCK PRICES BY SECTOR ---");
 
         CustomLinkedList sectors = DatabaseManager.getAllSectors();
@@ -113,7 +113,7 @@ public class MarketDisplay {
         System.out.print(" Enter Sector ID: ");
         int sectorId;
         try {
-            sectorId = Integer.parseInt(scanner.nextLine().trim());
+            sectorId = Integer.parseInt(sc.nextLine().trim());
         } catch (NumberFormatException e) {
             System.out.println("Invalid input.");
             return;
@@ -143,7 +143,7 @@ public class MarketDisplay {
         Thread inputThread = new Thread(new Runnable() {
             public void run() {
                 try {
-                    scanner.nextLine(); // blocks until Enter is pressed
+                    sc.nextLine(); // blocks until Enter is pressed
                 } catch (Exception ignored) {
                 }
                 exitRequested[0] = true;

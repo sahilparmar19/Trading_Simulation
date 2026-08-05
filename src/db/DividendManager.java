@@ -5,12 +5,12 @@ import java.sql.*;
 public class DividendManager {
     public static int declareDividend(String ticker, double amountPerShare) {
         String sql = "INSERT INTO dividends (ticker, amount_per_share, declared_at) VALUES (?, ?, NOW()) RETURNING dividend_id";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = DatabaseManager.getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = DatabaseManager.getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setString(1, ticker);
             pstmt.setDouble(2, amountPerShare);
             rs = pstmt.executeQuery();
@@ -22,16 +22,16 @@ public class DividendManager {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
         return -1;
     }
 
     public static boolean payAllShareholders(int dividendId) {
-        Connection conn = null;
+        Connection con = null;
         try {
-            conn = DatabaseManager.getConnection();
-            conn.setAutoCommit(false);
+            con = DatabaseManager.getConnection();
+            con.setAutoCommit(false);
 
             // 1. Fetch dividend details
             String divSql = "SELECT ticker, amount_per_share FROM dividends WHERE dividend_id = ?";
@@ -40,7 +40,7 @@ public class DividendManager {
             PreparedStatement ps1 = null;
             ResultSet rs1 = null;
             try {
-                ps1 = conn.prepareStatement(divSql);
+                ps1 = con.prepareStatement(divSql);
                 ps1.setInt(1, dividendId);
                 rs1 = ps1.executeQuery();
                 if (rs1.next()) {
@@ -64,9 +64,9 @@ public class DividendManager {
             PreparedStatement insertPayment = null;
             ResultSet rs2 = null;
             try {
-                selectHolders = conn.prepareStatement(holdersSql);
-                updateBalance = conn.prepareStatement(updateBalSql);
-                insertPayment = conn.prepareStatement(payRecordSql);
+                selectHolders = con.prepareStatement(holdersSql);
+                updateBalance = con.prepareStatement(updateBalSql);
+                insertPayment = con.prepareStatement(payRecordSql);
 
                 selectHolders.setString(1, ticker);
                 rs2 = selectHolders.executeQuery();
@@ -98,29 +98,29 @@ public class DividendManager {
             String updateDivSql = "UPDATE dividends SET paid_at = NOW() WHERE dividend_id = ?";
             PreparedStatement ps3 = null;
             try {
-                ps3 = conn.prepareStatement(updateDivSql);
+                ps3 = con.prepareStatement(updateDivSql);
                 ps3.setInt(1, dividendId);
                 ps3.executeUpdate();
             } finally {
                 if (ps3 != null) { try { ps3.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
             }
 
-            conn.commit();
+            con.commit();
             return true;
         } catch (SQLException e) {
             System.err.println("Error paying shareholders, rolling back. Reason: " + e.getMessage());
-            if (conn != null) {
+            if (con != null) {
                 try {
-                    conn.rollback();
+                    con.rollback();
                 } catch (SQLException ex) {
                     System.err.println("Rollback failed: " + ex.getMessage());
                 }
             }
             return false;
         } finally {
-            if (conn != null) {
+            if (con != null) {
                 try {
-                    conn.close();
+                    con.close();
                 } catch (SQLException e) {
                     System.err.println("Error closing connection: " + e.getMessage());
                 }

@@ -9,7 +9,7 @@ import java.util.Scanner;
 
 public class PortfolioView {
 
-    public static void render(Scanner scanner) {
+    public static void render(Scanner sc) {
         if (!Session.isLoggedIn()) {
             System.out.println("Please log in first.");
             return;
@@ -58,7 +58,7 @@ public class PortfolioView {
         System.out.println(" [1] Export Portfolio Report (CSV)");
         System.out.println(" [2] Go Back");
         System.out.print(" Select option: ");
-        String choice = scanner.nextLine().trim();
+        String choice = sc.nextLine().trim();
 
         if (choice.equals("1")) {
             String path = ReportGenerator.exportPortfolio(userId);

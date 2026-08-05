@@ -33,14 +33,14 @@ public class ReportGenerator {
                      "WHERE o_buy.user_id = ? OR o_sell.user_id = ? " +
                      "ORDER BY t.executed_at DESC";
 
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         FileWriter fw = null;
         PrintWriter pw = null;
         try {
-            conn = DatabaseManager.getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = DatabaseManager.getConnection();
+            pstmt = con.prepareStatement(sql);
             fw = new FileWriter(filePath);
             pw = new PrintWriter(fw);
 
@@ -68,7 +68,7 @@ public class ReportGenerator {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
             if (pw != null) { pw.close(); }
             if (fw != null) { try { fw.close(); } catch (IOException e) { System.err.println("Error closing FileWriter: " + e.getMessage()); } }
         }
@@ -117,14 +117,14 @@ public class ReportGenerator {
                      "JOIN users u ON app.user_id = u.user_id " +
                      "WHERE app.ipo_id = ?";
 
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         FileWriter fw = null;
         PrintWriter pw = null;
         try {
-            conn = DatabaseManager.getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = DatabaseManager.getConnection();
+            pstmt = con.prepareStatement(sql);
             fw = new FileWriter(filePath);
             pw = new PrintWriter(fw);
 
@@ -154,7 +154,7 @@ public class ReportGenerator {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
             if (pw != null) { pw.close(); }
             if (fw != null) { try { fw.close(); } catch (IOException e) { System.err.println("Error closing FileWriter: " + e.getMessage()); } }
         }
@@ -167,12 +167,12 @@ public class ReportGenerator {
         Timestamp declaredAt = null;
 
         String divSql = "SELECT ticker, amount_per_share, declared_at FROM dividends WHERE dividend_id = ?";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = DatabaseManager.getConnection();
-            pstmt = conn.prepareStatement(divSql);
+            con = DatabaseManager.getConnection();
+            pstmt = con.prepareStatement(divSql);
             pstmt.setInt(1, dividendId);
             rs = pstmt.executeQuery();
             if (rs.next()) {
@@ -188,7 +188,7 @@ public class ReportGenerator {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
 
         String dateStr = new SimpleDateFormat("yyyyMMdd").format(new Date(declaredAt.getTime()));

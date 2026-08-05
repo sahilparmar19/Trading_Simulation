@@ -9,7 +9,7 @@ import java.util.Scanner;
 
 public class StockDetailView {
 
-    public static void render(String ticker, Scanner scanner) {
+    public static void render(String ticker, Scanner sc) {
         Stock stock = DatabaseManager.getStock(ticker);
         if (stock == null) {
             System.out.println("Stock not found with ticker: " + ticker);
@@ -36,7 +36,7 @@ public class StockDetailView {
             System.out.println(" [5] Go Back");
             System.out.print(" Select option: ");
 
-            String choice = scanner.nextLine().trim();
+            String choice = sc.nextLine().trim();
             if (choice.equals("5")) {
                 break;
             }
@@ -95,7 +95,7 @@ public class StockDetailView {
         System.out.println("-------------------------");
     }
 
-    public static void searchStocksMenu(Scanner scanner) {
+    public static void searchStocksMenu(Scanner sc) {
         while (true) {
             System.out.println("\n--- STOCK SEARCH ---");
 
@@ -112,7 +112,7 @@ public class StockDetailView {
             }
             System.out.printf("  [%d] Go Back%n", sectors.size() + 1);
             System.out.print(" Choose option: ");
-            String sectorChoice = scanner.nextLine().trim();
+            String sectorChoice = sc.nextLine().trim();
 
             int sectorIndex;
             try {
@@ -156,7 +156,7 @@ public class StockDetailView {
                 }
                 System.out.printf(" [%d] Go Back%n", stocks.size() + 1);
                 System.out.print(" Select stock: ");
-                String stockChoice = scanner.nextLine().trim();
+                String stockChoice = sc.nextLine().trim();
 
                 int stockIndex;
                 try {
@@ -175,7 +175,7 @@ public class StockDetailView {
                 }
 
                 Stock selectedStock = (Stock) stocks.get(stockIndex - 1);
-                render(selectedStock.getTicker(), scanner);
+                render(selectedStock.getTicker(), sc);
             }
         }
     }

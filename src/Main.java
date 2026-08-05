@@ -53,17 +53,17 @@ public class Main {
 
         System.out.println("Simulation engine fully running.");
 
-        Scanner scanner = new Scanner(System.in);
+        Scanner sc = new Scanner(System.in);
         try {
             while (true) {
                 if (!Session.isLoggedIn()) {
-                    showAuthMenu(scanner);
+                    showAuthMenu(sc);
                 } else {
                     User user = Session.getCurrentUser();
                     if (user.isAdmin()) {
-                        showAdminMenu(scanner);
+                        showAdminMenu(sc);
                     } else {
-                        showUserMenu(scanner);
+                        showUserMenu(sc);
                     }
                 }
             }
@@ -75,7 +75,7 @@ public class Main {
             bot1.shutdown();
             bot2.shutdown();
             bot3.shutdown();
-            scanner.close();
+            sc.close();
             System.out.println("Goodbye.");
         }
     }
@@ -83,8 +83,8 @@ public class Main {
     private static void loadPendingOrders() {
         String sql = "SELECT * FROM orders WHERE status = 'PENDING'";
         int count = 0;
-        try (Connection conn = DatabaseManager.getConnection();
-                PreparedStatement pstmt = conn.prepareStatement(sql);
+        try (Connection con = DatabaseManager.getConnection();
+                PreparedStatement pstmt = con.prepareStatement(sql);
                 ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
@@ -116,14 +116,14 @@ public class Main {
         }
     }
 
-    private static void showAuthMenu(Scanner scanner) {
+    private static void showAuthMenu(Scanner sc) {
         System.out.println("\n--- MAIN AUTH MENU ---");
         System.out.println(" [1] Log In (Regular User)");
         System.out.println(" [2] Sign Up (New User)");
         System.out.println(" [3] Admin Log In");
         System.out.println(" [4] Exit");
         System.out.print(" Select option: ");
-        String choice = scanner.nextLine().trim();
+        String choice = sc.nextLine().trim();
 
         if (choice.equals("4")) {
             System.out.println("Exiting application.");
@@ -133,9 +133,9 @@ public class Main {
         switch (choice) {
             case "1":
                 System.out.print(" Username: ");
-                String user = scanner.nextLine().trim();
+                String user = sc.nextLine().trim();
                 System.out.print(" Password: ");
-                String pass = scanner.nextLine().trim();
+                String pass = sc.nextLine().trim();
                 User loggedUser = AuthManager.login(user, pass);
                 if (loggedUser != null && !loggedUser.isAdmin()) {
                     Session.login(loggedUser);
@@ -146,11 +146,11 @@ public class Main {
                 break;
             case "2":
                 System.out.print(" Choose Username: ");
-                String regUser = scanner.nextLine().trim();
+                String regUser = sc.nextLine().trim();
                 System.out.print(" Choose Password: ");
-                String regPass = scanner.nextLine().trim();
+                String regPass = sc.nextLine().trim();
                 System.out.print(" Enter Full Name: ");
-                String regName = scanner.nextLine().trim();
+                String regName = sc.nextLine().trim();
                 boolean success = AuthManager.signUp(regUser, regPass, regName);
                 if (success) {
                     System.out.println("Signed up successfully! You can now log in.");
@@ -160,9 +160,9 @@ public class Main {
                 break;
             case "3":
                 System.out.print(" Admin Username: ");
-                String adminUser = scanner.nextLine().trim();
+                String adminUser = sc.nextLine().trim();
                 System.out.print(" Admin Password: ");
-                String adminPass = scanner.nextLine().trim();
+                String adminPass = sc.nextLine().trim();
                 User loggedAdmin = AuthManager.adminLogin(adminUser, adminPass);
                 if (loggedAdmin != null) {
                     Session.login(loggedAdmin);
@@ -177,7 +177,7 @@ public class Main {
         }
     }
 
-    private static void showUserMenu(Scanner scanner) {
+    private static void showUserMenu(Scanner sc) {
         User u = Session.getCurrentUser();
         System.out.println("\n--- USER CONSOLE ---");
         System.out.println(" [1] View Portfolio & Balance");
@@ -192,17 +192,17 @@ public class Main {
         System.out.println("[10] View Limit Orders");
         System.out.println("[11] Log Out");
         System.out.print(" Choose option: ");
-        String choice = scanner.nextLine().trim();
+        String choice = sc.nextLine().trim();
 
         switch (choice) {
             case "1":
-                PortfolioView.render(scanner);
+                PortfolioView.render(sc);
                 break;
             case "2":
-                WatchlistView.render(scanner);
+                WatchlistView.render(sc);
                 break;
             case "3":
-                StockDetailView.searchStocksMenu(scanner);
+                StockDetailView.searchStocksMenu(sc);
                 break;
             case "4":
                 MarketDisplay.showTopGainers();
@@ -210,13 +210,13 @@ public class Main {
                 MarketDisplay.showSectorPnL();
                 break;
             case "5":
-                placeOrderFlow(true, scanner);
+                placeOrderFlow(true, sc);
                 break;
             case "6":
-                placeOrderFlow(false, scanner);
+                placeOrderFlow(false, sc);
                 break;
             case "7":
-                placeStopLossFlow(scanner);
+                placeStopLossFlow(sc);
                 break;
             case "8":
                 System.out.println("Exporting reports...");
@@ -231,7 +231,7 @@ public class Main {
                 }
                 break;
             case "9":
-                MarketDisplay.showLiveStocksBySector(scanner);
+                MarketDisplay.showLiveStocksBySector(sc);
                 break;
             case "10":
                 viewLimitOrders();
@@ -246,17 +246,17 @@ public class Main {
         }
     }
 
-    private static void showAdminMenu(Scanner scanner) {
+    private static void showAdminMenu(Scanner sc) {
         System.out.println("\n--- ADMIN CONSOLE ---");
         System.out.println(" [1] Admin Panel (Dividends, IPOs, Users)");
         System.out.println(" [2] Market Overview");
         System.out.println(" [3] Log Out");
         System.out.print(" Choose option: ");
-        String choice = scanner.nextLine().trim();
+        String choice = sc.nextLine().trim();
 
         switch (choice) {
             case "1":
-                AdminPanel.render(scanner);
+                AdminPanel.render(sc);
                 break;
             case "2":
                 MarketDisplay.showTopGainers();
@@ -274,10 +274,10 @@ public class Main {
     }
 
     /**
-     * Walks the user through sector → stock selection.
+     * Walks the user through sector â†’ stock selection.
      * Returns the selected Stock, or null if the user chose to go back.
      */
-    private static Stock selectStockFromSectors(Scanner scanner) {
+    private static Stock selectStockFromSectors(Scanner sc) {
         // Display all sectors
         CustomLinkedList sectors = DatabaseManager.getAllSectors();
         if (sectors.size() == 0) {
@@ -292,7 +292,7 @@ public class Main {
         }
         System.out.printf("  [%d] Go Back%n", sectors.size() + 1);
         System.out.print(" Choose option: ");
-        String sectorChoice = scanner.nextLine().trim();
+        String sectorChoice = sc.nextLine().trim();
 
         int sectorIndex;
         try {
@@ -329,12 +329,12 @@ public class Main {
             if (s.getPrevClose() > 0) {
                 change = ((s.getCurrentPrice() - s.getPrevClose()) / s.getPrevClose()) * 100.0;
             }
-            System.out.printf(" [%-3d] | %-10s | %-32s | ₹%-13.2f | %+.2f%%%n",
+            System.out.printf(" [%-3d] | %-10s | %-32s | â‚¹%-13.2f | %+.2f%%%n",
                     i + 1, s.getTicker(), s.getCompanyName(), s.getCurrentPrice(), change);
         }
         System.out.printf(" [%d] Go Back%n", stocks.size() + 1);
         System.out.print(" Select stock: ");
-        String stockChoice = scanner.nextLine().trim();
+        String stockChoice = sc.nextLine().trim();
 
         int stockIndex;
         try {
@@ -355,11 +355,11 @@ public class Main {
         return (Stock) stocks.get(stockIndex - 1);
     }
 
-    private static void placeOrderFlow(boolean isBuy, Scanner scanner) {
+    private static void placeOrderFlow(boolean isBuy, Scanner sc) {
         System.out.println(isBuy ? "\n--- PLACE BUY ORDER ---" : "\n--- PLACE SELL ORDER ---");
 
-        // Sector → Stock selection
-        Stock stock = selectStockFromSectors(scanner);
+        // Sector â†’ Stock selection
+        Stock stock = selectStockFromSectors(sc);
         if (stock == null) {
             return;
         }
@@ -373,7 +373,7 @@ public class Main {
         System.out.print(" Enter Quantity: ");
         int qty;
         try {
-            qty = Integer.parseInt(scanner.nextLine().trim());
+            qty = Integer.parseInt(sc.nextLine().trim());
             if (qty <= 0)
                 throw new NumberFormatException();
         } catch (NumberFormatException e) {
@@ -403,7 +403,7 @@ public class Main {
         System.out.println("  [1] LIMIT Order");
         System.out.println("  [2] MARKET Order");
         System.out.print(" Select (1-2): ");
-        String typeChoice = scanner.nextLine().trim();
+        String typeChoice = sc.nextLine().trim();
 
         String type = "LIMIT";
         double price = 0.0;
@@ -411,10 +411,10 @@ public class Main {
         if (typeChoice.equals("1")) {
             type = "LIMIT";
             // Show current market price before asking for limit price
-            System.out.printf(" Current Market Price: ₹%.2f%n", stock.getCurrentPrice());
+            System.out.printf(" Current Market Price: â‚¹%.2f%n", stock.getCurrentPrice());
             System.out.print(" Enter Limit Price (INR): ");
             try {
-                price = Double.parseDouble(scanner.nextLine().trim());
+                price = Double.parseDouble(sc.nextLine().trim());
                 if (price <= 0)
                     throw new NumberFormatException();
             } catch (NumberFormatException e) {
@@ -458,11 +458,11 @@ public class Main {
         }
     }
 
-    private static void placeStopLossFlow(Scanner scanner) {
+    private static void placeStopLossFlow(Scanner sc) {
         int userId = Session.getCurrentUser().getUserId();
         System.out.println("\n--- SET STOP-LOSS ORDER ---");
         System.out.print(" Enter Stock Ticker: ");
-        String ticker = scanner.nextLine().trim().toUpperCase();
+        String ticker = sc.nextLine().trim().toUpperCase();
         Stock stock = DatabaseManager.getStock(ticker);
         if (stock == null) {
             System.out.println("Stock not found.");
@@ -487,7 +487,7 @@ public class Main {
         System.out.print(" Enter Quantity (max " + ownedQty + "): ");
         int qty;
         try {
-            qty = Integer.parseInt(scanner.nextLine().trim());
+            qty = Integer.parseInt(sc.nextLine().trim());
             if (qty <= 0 || qty > ownedQty)
                 throw new NumberFormatException();
         } catch (NumberFormatException e) {
@@ -495,13 +495,13 @@ public class Main {
             return;
         }
 
-        System.out.printf(" Current Market Price: ₹%.2f%n", stock.getCurrentPrice());
+        System.out.printf(" Current Market Price: â‚¹%.2f%n", stock.getCurrentPrice());
         System.out.print(" Enter Stop-Loss Trigger Price (INR): ");
         double stopPrice;
         try {
-            stopPrice = Double.parseDouble(scanner.nextLine().trim());
+            stopPrice = Double.parseDouble(sc.nextLine().trim());
             if (stopPrice <= 0 || stopPrice >= stock.getCurrentPrice()) {
-                System.out.println("Stop price must be positive and less than current market price (₹"
+                System.out.println("Stop price must be positive and less than current market price (â‚¹"
                         + stock.getCurrentPrice() + ").");
                 return;
             }
@@ -511,14 +511,14 @@ public class Main {
         }
 
         String sql = "INSERT INTO stop_loss_orders (user_id, ticker, quantity, stop_price, status, created_at) VALUES (?, ?, ?, ?, 'ACTIVE', NOW())";
-        try (Connection conn = DatabaseManager.getConnection();
-                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection con = DatabaseManager.getConnection();
+                PreparedStatement pstmt = con.prepareStatement(sql)) {
             pstmt.setInt(1, userId);
             pstmt.setString(2, ticker);
             pstmt.setInt(3, qty);
             pstmt.setDouble(4, stopPrice);
             pstmt.executeUpdate();
-            System.out.println("Stop-loss order set successfully at ₹" + stopPrice);
+            System.out.println("Stop-loss order set successfully at â‚¹" + stopPrice);
         } catch (SQLException e) {
             System.err.println("Error setting stop-loss: " + e.getMessage());
         }
@@ -541,7 +541,7 @@ public class Main {
             Order o = (Order) orders.get(i);
             String side = o.isBuy() ? "BUY" : "SELL";
             Stock stock = DatabaseManager.getStock(o.getTicker());
-            System.out.printf(" %-10d | %-10s | %-8s | ₹%-13.2f | %-10d | %s%n",
+            System.out.printf(" %-10d | %-10s | %-8s | â‚¹%-13.2f | %-10d | %s%n",
                     o.getOrderId(), o.getTicker(), side, o.getPrice(), o.getQuantity(),
                     o.getTimestamp().toString());
         }
@@ -556,7 +556,7 @@ public class Main {
                         ? stock.getCurrentPrice() - o.getPrice()
                         : o.getPrice() - stock.getCurrentPrice();
                 String status = diff > 0 ? "(Above limit)" : diff < 0 ? "(Below limit)" : "(At limit)";
-                System.out.printf("   %s: ₹%.2f %s%n", o.getTicker(), stock.getCurrentPrice(), status);
+                System.out.printf("   %s: â‚¹%.2f %s%n", o.getTicker(), stock.getCurrentPrice(), status);
             }
         }
     }

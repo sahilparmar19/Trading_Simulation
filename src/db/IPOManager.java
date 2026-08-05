@@ -6,10 +6,10 @@ import java.sql.*;
 public class IPOManager {
 
     public static int createIPO(String companyName, String ticker, int sectorId, double ipoPrice, long totalShares, Timestamp openTime, Timestamp closeTime) {
-        Connection conn = null;
+        Connection con = null;
         try {
-            conn = DatabaseManager.getConnection();
-            conn.setAutoCommit(false);
+            con = DatabaseManager.getConnection();
+            con.setAutoCommit(false);
 
             // 1. Insert into stocks (is_listed = FALSE)
             String insertStockSql = "INSERT INTO stocks (ticker, company_name, sector_id, current_price, open_price, prev_close, market_cap, " +
@@ -17,7 +17,7 @@ public class IPOManager {
                                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, 'NSE')";
             PreparedStatement ps1 = null;
             try {
-                ps1 = conn.prepareStatement(insertStockSql);
+                ps1 = con.prepareStatement(insertStockSql);
                 ps1.setString(1, ticker);
                 ps1.setString(2, companyName);
                 ps1.setInt(3, sectorId);
@@ -45,7 +45,7 @@ public class IPOManager {
             PreparedStatement ps2 = null;
             ResultSet rs2 = null;
             try {
-                ps2 = conn.prepareStatement(insertIpoSql);
+                ps2 = con.prepareStatement(insertIpoSql);
                 ps2.setString(1, ticker);
                 ps2.setString(2, companyName);
                 ps2.setInt(3, sectorId);
@@ -63,16 +63,16 @@ public class IPOManager {
                 if (ps2 != null) { try { ps2.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
             }
 
-            conn.commit();
+            con.commit();
             return ipoId;
         } catch (SQLException e) {
             System.err.println("Error creating IPO, rolling back. Reason: " + e.getMessage());
-            if (conn != null) {
-                try { conn.rollback(); } catch (SQLException ex) { System.err.println("Rollback failed: " + ex.getMessage()); }
+            if (con != null) {
+                try { con.rollback(); } catch (SQLException ex) { System.err.println("Rollback failed: " + ex.getMessage()); }
             }
         } finally {
-            if (conn != null) {
-                try { conn.close(); } catch (SQLException e) { System.err.println("Error closing connection: " + e.getMessage()); }
+            if (con != null) {
+                try { con.close(); } catch (SQLException e) { System.err.println("Error closing connection: " + e.getMessage()); }
             }
         }
         return -1;
@@ -80,26 +80,26 @@ public class IPOManager {
 
     public static void openIPO(int ipoId) {
         String sql = "UPDATE ipos SET status = 'OPEN' WHERE ipo_id = ?";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         try {
-            conn = DatabaseManager.getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = DatabaseManager.getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setInt(1, ipoId);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Error opening IPO: " + e.getMessage());
         } finally {
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
     }
 
     public static boolean applyForIPO(int userId, int ipoId, int qty) {
-        Connection conn = null;
+        Connection con = null;
         try {
-            conn = DatabaseManager.getConnection();
-            conn.setAutoCommit(false);
+            con = DatabaseManager.getConnection();
+            con.setAutoCommit(false);
 
             // 1. Fetch IPO details
             String ipoSql = "SELECT ipo_price, status FROM ipos WHERE ipo_id = ? FOR UPDATE";
@@ -108,7 +108,7 @@ public class IPOManager {
             PreparedStatement ps1 = null;
             ResultSet rs1 = null;
             try {
-                ps1 = conn.prepareStatement(ipoSql);
+                ps1 = con.prepareStatement(ipoSql);
                 ps1.setInt(1, ipoId);
                 rs1 = ps1.executeQuery();
                 if (rs1.next()) {
@@ -132,7 +132,7 @@ public class IPOManager {
             PreparedStatement ps2 = null;
             ResultSet rs2 = null;
             try {
-                ps2 = conn.prepareStatement(balSql);
+                ps2 = con.prepareStatement(balSql);
                 ps2.setInt(1, userId);
                 rs2 = ps2.executeQuery();
                 if (rs2.next()) {
@@ -154,7 +154,7 @@ public class IPOManager {
             String deductSql = "UPDATE users SET balance = balance - ? WHERE user_id = ?";
             PreparedStatement ps3 = null;
             try {
-                ps3 = conn.prepareStatement(deductSql);
+                ps3 = con.prepareStatement(deductSql);
                 ps3.setDouble(1, totalCost);
                 ps3.setInt(2, userId);
                 ps3.executeUpdate();
@@ -166,7 +166,7 @@ public class IPOManager {
             String appSql = "INSERT INTO ipo_applications (ipo_id, user_id, applied_qty, allotted_qty) VALUES (?, ?, ?, 0)";
             PreparedStatement ps4 = null;
             try {
-                ps4 = conn.prepareStatement(appSql);
+                ps4 = con.prepareStatement(appSql);
                 ps4.setInt(1, ipoId);
                 ps4.setInt(2, userId);
                 ps4.setInt(3, qty);
@@ -175,26 +175,26 @@ public class IPOManager {
                 if (ps4 != null) { try { ps4.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
             }
 
-            conn.commit();
+            con.commit();
             return true;
         } catch (SQLException e) {
             System.err.println("Error applying for IPO: " + e.getMessage());
-            if (conn != null) {
-                try { conn.rollback(); } catch (SQLException ex) { System.err.println("Rollback failed: " + ex.getMessage()); }
+            if (con != null) {
+                try { con.rollback(); } catch (SQLException ex) { System.err.println("Rollback failed: " + ex.getMessage()); }
             }
             return false;
         } finally {
-            if (conn != null) {
-                try { conn.close(); } catch (SQLException e) { System.err.println("Error closing connection: " + e.getMessage()); }
+            if (con != null) {
+                try { con.close(); } catch (SQLException e) { System.err.println("Error closing connection: " + e.getMessage()); }
             }
         }
     }
 
     public static boolean processAllotment(int ipoId) {
-        Connection conn = null;
+        Connection con = null;
         try {
-            conn = DatabaseManager.getConnection();
-            conn.setAutoCommit(false);
+            con = DatabaseManager.getConnection();
+            con.setAutoCommit(false);
 
             // 1. Fetch IPO details
             String ipoSql = "SELECT ticker, ipo_price, total_shares, status FROM ipos WHERE ipo_id = ? FOR UPDATE";
@@ -205,7 +205,7 @@ public class IPOManager {
             PreparedStatement ps1 = null;
             ResultSet rs1 = null;
             try {
-                ps1 = conn.prepareStatement(ipoSql);
+                ps1 = con.prepareStatement(ipoSql);
                 ps1.setInt(1, ipoId);
                 rs1 = ps1.executeQuery();
                 if (rs1.next()) {
@@ -231,7 +231,7 @@ public class IPOManager {
             PreparedStatement ps2 = null;
             ResultSet rs2 = null;
             try {
-                ps2 = conn.prepareStatement(sumSql);
+                ps2 = con.prepareStatement(sumSql);
                 ps2.setInt(1, ipoId);
                 rs2 = ps2.executeQuery();
                 if (rs2.next()) {
@@ -247,14 +247,14 @@ public class IPOManager {
                 String updateIpoSql = "UPDATE ipos SET status = 'CLOSED', shares_remaining = ? WHERE ipo_id = ?";
                 PreparedStatement ps3 = null;
                 try {
-                    ps3 = conn.prepareStatement(updateIpoSql);
+                    ps3 = con.prepareStatement(updateIpoSql);
                     ps3.setLong(1, totalShares);
                     ps3.setInt(2, ipoId);
                     ps3.executeUpdate();
                 } finally {
                     if (ps3 != null) { try { ps3.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
                 }
-                conn.commit();
+                con.commit();
                 return true;
             }
 
@@ -274,10 +274,10 @@ public class IPOManager {
             PreparedStatement updatePortfolio = null;
             ResultSet rs3 = null;
             try {
-                getApps = conn.prepareStatement(appsSql);
-                updateApp = conn.prepareStatement(updateAppSql);
-                refundUser = conn.prepareStatement(refundSql);
-                updatePortfolio = conn.prepareStatement(insertPortfolioSql);
+                getApps = con.prepareStatement(appsSql);
+                updateApp = con.prepareStatement(updateAppSql);
+                refundUser = con.prepareStatement(refundSql);
+                updatePortfolio = con.prepareStatement(insertPortfolioSql);
 
                 getApps.setInt(1, ipoId);
                 rs3 = getApps.executeQuery();
@@ -333,7 +333,7 @@ public class IPOManager {
             String updateIpoSql = "UPDATE ipos SET status = 'CLOSED', shares_remaining = ? WHERE ipo_id = ?";
             PreparedStatement ps4 = null;
             try {
-                ps4 = conn.prepareStatement(updateIpoSql);
+                ps4 = con.prepareStatement(updateIpoSql);
                 ps4.setLong(1, remainingShares);
                 ps4.setInt(2, ipoId);
                 ps4.executeUpdate();
@@ -341,26 +341,26 @@ public class IPOManager {
                 if (ps4 != null) { try { ps4.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
             }
 
-            conn.commit();
+            con.commit();
             return true;
         } catch (SQLException e) {
             System.err.println("Error processing allotment, rolling back. Reason: " + e.getMessage());
-            if (conn != null) {
-                try { conn.rollback(); } catch (SQLException ex) { System.err.println("Rollback failed: " + ex.getMessage()); }
+            if (con != null) {
+                try { con.rollback(); } catch (SQLException ex) { System.err.println("Rollback failed: " + ex.getMessage()); }
             }
             return false;
         } finally {
-            if (conn != null) {
-                try { conn.close(); } catch (SQLException e) { System.err.println("Error closing connection: " + e.getMessage()); }
+            if (con != null) {
+                try { con.close(); } catch (SQLException e) { System.err.println("Error closing connection: " + e.getMessage()); }
             }
         }
     }
 
     public static void listStock(int ipoId) {
-        Connection conn = null;
+        Connection con = null;
         try {
-            conn = DatabaseManager.getConnection();
-            conn.setAutoCommit(false);
+            con = DatabaseManager.getConnection();
+            con.setAutoCommit(false);
 
             // Fetch IPO ticker
             String getTickerSql = "SELECT ticker FROM ipos WHERE ipo_id = ?";
@@ -368,7 +368,7 @@ public class IPOManager {
             PreparedStatement ps1 = null;
             ResultSet rs1 = null;
             try {
-                ps1 = conn.prepareStatement(getTickerSql);
+                ps1 = con.prepareStatement(getTickerSql);
                 ps1.setInt(1, ipoId);
                 rs1 = ps1.executeQuery();
                 if (rs1.next()) {
@@ -385,7 +385,7 @@ public class IPOManager {
             String updateStockSql = "UPDATE stocks SET is_listed = TRUE WHERE ticker = ?";
             PreparedStatement ps2 = null;
             try {
-                ps2 = conn.prepareStatement(updateStockSql);
+                ps2 = con.prepareStatement(updateStockSql);
                 ps2.setString(1, ticker);
                 ps2.executeUpdate();
             } finally {
@@ -396,34 +396,34 @@ public class IPOManager {
             String updateIpoSql = "UPDATE ipos SET status = 'LISTED' WHERE ipo_id = ?";
             PreparedStatement ps3 = null;
             try {
-                ps3 = conn.prepareStatement(updateIpoSql);
+                ps3 = con.prepareStatement(updateIpoSql);
                 ps3.setInt(1, ipoId);
                 ps3.executeUpdate();
             } finally {
                 if (ps3 != null) { try { ps3.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
             }
 
-            conn.commit();
+            con.commit();
         } catch (SQLException e) {
             System.err.println("Error listing stock: " + e.getMessage());
-            if (conn != null) {
-                try { conn.rollback(); } catch (SQLException ex) { System.err.println("Rollback failed: " + ex.getMessage()); }
+            if (con != null) {
+                try { con.rollback(); } catch (SQLException ex) { System.err.println("Rollback failed: " + ex.getMessage()); }
             }
         } finally {
-            if (conn != null) {
-                try { conn.close(); } catch (SQLException e) { System.err.println("Error closing connection: " + e.getMessage()); }
+            if (con != null) {
+                try { con.close(); } catch (SQLException e) { System.err.println("Error closing connection: " + e.getMessage()); }
             }
         }
     }
 
     public static IPO getIPO(int ipoId) {
         String sql = "SELECT * FROM ipos WHERE ipo_id = ?";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = DatabaseManager.getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = DatabaseManager.getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setInt(1, ipoId);
             rs = pstmt.executeQuery();
             if (rs.next()) {
@@ -445,7 +445,7 @@ public class IPOManager {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
         return null;
     }

@@ -5,10 +5,10 @@ import java.sql.*;
 
 public class TradeTransaction {
     public static boolean execute(Order buyOrder, Order sellOrder, double executedPrice, int quantity) {
-        Connection conn = null;
+        Connection con = null;
         try {
-            conn = DatabaseManager.getConnection();
-            conn.setAutoCommit(false);
+            con = DatabaseManager.getConnection();
+            con.setAutoCommit(false);
 
             // 1. Check buyer's balance
             String checkBalanceSql = "SELECT balance FROM users WHERE user_id = ? FOR UPDATE";
@@ -16,7 +16,7 @@ public class TradeTransaction {
             PreparedStatement ps = null;
             ResultSet rs = null;
             try {
-                ps = conn.prepareStatement(checkBalanceSql);
+                ps = con.prepareStatement(checkBalanceSql);
                 ps.setInt(1, buyOrder.getUserId());
                 rs = ps.executeQuery();
                 if (rs.next()) {
@@ -41,7 +41,7 @@ public class TradeTransaction {
                 PreparedStatement ps2 = null;
                 ResultSet rs2 = null;
                 try {
-                    ps2 = conn.prepareStatement(lockSellerSql);
+                    ps2 = con.prepareStatement(lockSellerSql);
                     ps2.setInt(1, sellOrder.getUserId());
                     rs2 = ps2.executeQuery();
                     if (!rs2.next()) {
@@ -57,7 +57,7 @@ public class TradeTransaction {
             String deductSql = "UPDATE users SET balance = balance - ? WHERE user_id = ?";
             PreparedStatement ps3 = null;
             try {
-                ps3 = conn.prepareStatement(deductSql);
+                ps3 = con.prepareStatement(deductSql);
                 ps3.setDouble(1, totalCost);
                 ps3.setInt(2, buyOrder.getUserId());
                 ps3.executeUpdate();
@@ -69,7 +69,7 @@ public class TradeTransaction {
             String creditSql = "UPDATE users SET balance = balance + ? WHERE user_id = ?";
             PreparedStatement ps4 = null;
             try {
-                ps4 = conn.prepareStatement(creditSql);
+                ps4 = con.prepareStatement(creditSql);
                 ps4.setDouble(1, totalCost);
                 ps4.setInt(2, sellOrder.getUserId());
                 ps4.executeUpdate();
@@ -79,16 +79,16 @@ public class TradeTransaction {
 
             // 5. Update portfolios
             // Buyer portfolio: buy quantity
-            updatePortfolioInternal(conn, buyOrder.getUserId(), buyOrder.getTicker(), quantity, executedPrice);
+            updatePortfolioInternal(con, buyOrder.getUserId(), buyOrder.getTicker(), quantity, executedPrice);
             // Seller portfolio: sell quantity
-            updatePortfolioInternal(conn, sellOrder.getUserId(), sellOrder.getTicker(), -quantity, executedPrice);
+            updatePortfolioInternal(con, sellOrder.getUserId(), sellOrder.getTicker(), -quantity, executedPrice);
 
             // 6. Insert trade record
             String insertTradeSql = "INSERT INTO trades (buy_order_id, sell_order_id, ticker, executed_price, quantity, executed_at) " +
                                      "VALUES (?, ?, ?, ?, ?, ?)";
             PreparedStatement ps5 = null;
             try {
-                ps5 = conn.prepareStatement(insertTradeSql);
+                ps5 = con.prepareStatement(insertTradeSql);
                 ps5.setInt(1, buyOrder.getOrderId());
                 ps5.setInt(2, sellOrder.getOrderId());
                 ps5.setString(3, buyOrder.getTicker());
@@ -103,28 +103,28 @@ public class TradeTransaction {
             // 7. Update orders in DB
             int newBuyQty = buyOrder.getQuantity() - quantity;
             String newBuyStatus = newBuyQty == 0 ? "MATCHED" : "PENDING";
-            updateOrderInternal(conn, buyOrder.getOrderId(), newBuyStatus, newBuyQty);
+            updateOrderInternal(con, buyOrder.getOrderId(), newBuyStatus, newBuyQty);
 
             int newSellQty = sellOrder.getQuantity() - quantity;
             String newSellStatus = newSellQty == 0 ? "MATCHED" : "PENDING";
-            updateOrderInternal(conn, sellOrder.getOrderId(), newSellStatus, newSellQty);
+            updateOrderInternal(con, sellOrder.getOrderId(), newSellStatus, newSellQty);
 
-            conn.commit();
+            con.commit();
             return true;
         } catch (SQLException e) {
             // System.err.println("Trade matching failed, rolling back. Reason: " + e.getMessage());
-            if (conn != null) {
+            if (con != null) {
                 try {
-                    conn.rollback();
+                    con.rollback();
                 } catch (SQLException ex) {
                     System.err.println("Rollback failed: " + ex.getMessage());
                 }
             }
             return false;
         } finally {
-            if (conn != null) {
+            if (con != null) {
                 try {
-                    conn.close();
+                    con.close();
                 } catch (SQLException e) {
                     System.err.println("Error closing connection: " + e.getMessage());
                 }
@@ -132,7 +132,7 @@ public class TradeTransaction {
         }
     }
 
-    private static void updatePortfolioInternal(Connection conn, int userId, String ticker, int quantityChange, double price) throws SQLException {
+    private static void updatePortfolioInternal(Connection con, int userId, String ticker, int quantityChange, double price) throws SQLException {
         // Fetch current portfolio state
         String selectSql = "SELECT quantity, avg_buy_price FROM portfolio WHERE user_id = ? AND ticker = ? FOR UPDATE";
         int currentQty = 0;
@@ -142,7 +142,7 @@ public class TradeTransaction {
         PreparedStatement selectPstmt = null;
         ResultSet rs = null;
         try {
-            selectPstmt = conn.prepareStatement(selectSql);
+            selectPstmt = con.prepareStatement(selectSql);
             selectPstmt.setInt(1, userId);
             selectPstmt.setString(2, ticker);
             rs = selectPstmt.executeQuery();
@@ -168,7 +168,7 @@ public class TradeTransaction {
             String deleteSql = "DELETE FROM portfolio WHERE user_id = ? AND ticker = ?";
             PreparedStatement deletePstmt = null;
             try {
-                deletePstmt = conn.prepareStatement(deleteSql);
+                deletePstmt = con.prepareStatement(deleteSql);
                 deletePstmt.setInt(1, userId);
                 deletePstmt.setString(2, ticker);
                 deletePstmt.executeUpdate();
@@ -180,7 +180,7 @@ public class TradeTransaction {
                 String updateSql = "UPDATE portfolio SET quantity = ?, avg_buy_price = ? WHERE user_id = ? AND ticker = ?";
                 PreparedStatement updatePstmt = null;
                 try {
-                    updatePstmt = conn.prepareStatement(updateSql);
+                    updatePstmt = con.prepareStatement(updateSql);
                     updatePstmt.setInt(1, newQty);
                     updatePstmt.setDouble(2, newAvg);
                     updatePstmt.setInt(3, userId);
@@ -193,7 +193,7 @@ public class TradeTransaction {
                 String insertSql = "INSERT INTO portfolio (user_id, ticker, quantity, avg_buy_price) VALUES (?, ?, ?, ?)";
                 PreparedStatement insertPstmt = null;
                 try {
-                    insertPstmt = conn.prepareStatement(insertSql);
+                    insertPstmt = con.prepareStatement(insertSql);
                     insertPstmt.setInt(1, userId);
                     insertPstmt.setString(2, ticker);
                     insertPstmt.setInt(3, newQty);
@@ -206,11 +206,11 @@ public class TradeTransaction {
         }
     }
 
-    private static void updateOrderInternal(Connection conn, int orderId, String status, int quantity) throws SQLException {
+    private static void updateOrderInternal(Connection con, int orderId, String status, int quantity) throws SQLException {
         String sql = "UPDATE orders SET status = ?, quantity = ? WHERE order_id = ?";
         PreparedStatement pstmt = null;
         try {
-            pstmt = conn.prepareStatement(sql);
+            pstmt = con.prepareStatement(sql);
             pstmt.setString(1, status);
             pstmt.setInt(2, quantity);
             pstmt.setInt(3, orderId);
