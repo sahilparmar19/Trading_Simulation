@@ -129,6 +129,23 @@ public class IPOManager {
                 throw new SQLException("IPO is not open for applications. Status: " + status);
             }
 
+            // 1b. Check if user already applied
+            String checkAppSql = "SELECT 1 FROM ipo_applications WHERE ipo_id = ? AND user_id = ?";
+            PreparedStatement psCheck = null;
+            ResultSet rsCheck = null;
+            try {
+                psCheck = con.prepareStatement(checkAppSql);
+                psCheck.setInt(1, ipoId);
+                psCheck.setInt(2, userId);
+                rsCheck = psCheck.executeQuery();
+                if (rsCheck.next()) {
+                    throw new SQLException("You have already applied for this IPO.");
+                }
+            } finally {
+                if (rsCheck != null) { try { rsCheck.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
+                if (psCheck != null) { try { psCheck.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
+            }
+
             // 2. Check user balance
             String balSql = "SELECT balance FROM users WHERE user_id = ? FOR UPDATE";
             double userBalance = 0;

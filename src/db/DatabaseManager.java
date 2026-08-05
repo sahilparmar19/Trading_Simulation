@@ -283,7 +283,7 @@ public class DatabaseManager {
     // Search stocks by name
     public static CustomLinkedList getStocksByName(String name) {
         CustomLinkedList list = new CustomLinkedList();
-        String sql = "SELECT s.* FROM stocks s WHERE LOWER(s.company_name) LIKE ? OR LOWER(s.ticker) LIKE ? AND s.is_listed = TRUE";
+        String sql = "SELECT s.* FROM stocks s WHERE (LOWER(s.company_name) LIKE ? OR LOWER(s.ticker) LIKE ?) AND s.is_listed = TRUE";
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;

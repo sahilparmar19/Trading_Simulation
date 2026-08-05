@@ -34,7 +34,7 @@ public class DividendManager {
             con.setAutoCommit(false);
 
             // 1. Fetch dividend details
-            String divSql = "SELECT ticker, amount_per_share FROM dividends WHERE dividend_id = ?";
+            String divSql = "SELECT ticker, amount_per_share FROM dividends WHERE dividend_id = ? AND paid_at IS NULL";
             String ticker = "";
             double amountPerShare = 0.0;
             PreparedStatement ps1 = null;

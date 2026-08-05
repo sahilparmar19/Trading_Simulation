@@ -515,13 +515,14 @@ public class Main {
             return;
         }
 
-        String sql = "INSERT INTO stop_loss_orders (user_id, ticker, quantity, stop_price, status, created_at) VALUES (?, ?, ?, ?, 'ACTIVE', NOW())";
+        String sql = "INSERT INTO stop_loss_orders (user_id, ticker, quantity, stop_price, status, created_at) VALUES (?, ?, ?, ?, ?, NOW())";
         try (Connection con = DatabaseManager.getConnection();
                 PreparedStatement pstmt = con.prepareStatement(sql)) {
             pstmt.setInt(1, userId);
             pstmt.setString(2, ticker);
             pstmt.setInt(3, qty);
             pstmt.setDouble(4, stopPrice);
+            pstmt.setString(5, model.StopLossStatus.ACTIVE.name());
             pstmt.executeUpdate();
             System.out.println("Stop-loss order set successfully at â‚¹" + stopPrice);
         } catch (SQLException e) {
