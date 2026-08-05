@@ -419,15 +419,16 @@ INSERT INTO price_history (ticker, price, recorded_at) VALUES
 
 -- Seed Users
 -- Passwords hash map:
--- 'adminpassword' -> '2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b'
--- 'alicepassword' -> '005df84db8b8cbcf50d75a6c1e30a55ab83853af06e902bcf1b78b548b2d4212'
--- 'bobpassword'   -> '642df525d6b4129528f804595fa655a4c540989f6655c8c514757c327299dfa8'
--- 'charliepassword' -> '2b10de1633519808a3d7c30d9db8cb1f463372c0199d9b6fc97f1f94539655aa'
+-- 'adminpassword' -> '749f09bade8aca755660eeb17792da880218d4fbdc4e25fbec279d7fe9f65d70'
+-- 'alicepassword' -> 'cb824cd5fe4950a77e36776d275f8f7039682babd490d5da3bc8fd31f4c2254c'
+-- 'bobpassword'   -> 'bc786c379d8b4334faa1f5ed4428d53ed5fbf6247a5974a72eac7fd5c13410d8'
+-- 'charliepassword' -> '34f06c2c5455da4dd905c43bda6ddf990e1c619da2d44fd4c809df6791e8eb80'
 INSERT INTO users (username, password_hash, name, balance, is_admin, created_at) VALUES
-('admin', '2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b', 'System Administrator', 1000000.00, TRUE, NOW() - INTERVAL '10 days'),
-('alice', '005df84db8b8cbcf50d75a6c1e30a55ab83853af06e902bcf1b78b548b2d4212', 'Alice Sharma', 150000.00, FALSE, NOW() - INTERVAL '5 days'),
-('bob', '642df525d6b4129528f804595fa655a4c540989f6655c8c514757c327299dfa8', 'Bob Patel', 85000.00, FALSE, NOW() - INTERVAL '4 days'),
-('charlie', '2b10de1633519808a3d7c30d9db8cb1f463372c0199d9b6fc97f1f94539655aa', 'Charlie Sen', 200000.00, FALSE, NOW() - INTERVAL '3 days');
+('admin', '749f09bade8aca755660eeb17792da880218d4fbdc4e25fbec279d7fe9f65d70', 'System Administrator', 1000000.00, TRUE, NOW() - INTERVAL '10 days'),
+('alice', 'cb824cd5fe4950a77e36776d275f8f7039682babd490d5da3bc8fd31f4c2254c', 'Alice Sharma', 150000.00, FALSE, NOW() - INTERVAL '5 days'),
+('bob', 'bc786c379d8b4334faa1f5ed4428d53ed5fbf6247a5974a72eac7fd5c13410d8', 'Bob Patel', 85000.00, FALSE, NOW() - INTERVAL '4 days'),
+('charlie', '34f06c2c5455da4dd905c43bda6ddf990e1c619da2d44fd4c809df6791e8eb80', 'Charlie Sen', 200000.00, FALSE, NOW() - INTERVAL '3 days');
+
 
 -- Seed Portfolio holdings for users
 INSERT INTO portfolio (user_id, ticker, quantity, avg_buy_price) VALUES

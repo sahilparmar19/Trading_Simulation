@@ -38,12 +38,12 @@ public class StopLossMonitor extends Thread {
 
     private void checkStopLossOrders() {
         String sql = "SELECT * FROM stop_loss_orders WHERE status = ?";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = DatabaseManager.getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = DatabaseManager.getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setString(1, StopLossStatus.ACTIVE.name());
             rs = pstmt.executeQuery();
 
@@ -65,21 +65,21 @@ public class StopLossMonitor extends Thread {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
     }
 
     private void triggerStopLoss(int slId, int userId, String ticker, int quantity, double stopPrice) {
-        Connection conn = null;
+        Connection con = null;
         try {
-            conn = DatabaseManager.getConnection();
-            conn.setAutoCommit(false);
+            con = DatabaseManager.getConnection();
+            con.setAutoCommit(false);
 
             // 1. Update stop-loss order status to TRIGGERED
             String updateSlSql = "UPDATE stop_loss_orders SET status = ? WHERE sl_id = ?";
             PreparedStatement ps1 = null;
             try {
-                ps1 = conn.prepareStatement(updateSlSql);
+                ps1 = con.prepareStatement(updateSlSql);
                 ps1.setString(1, StopLossStatus.TRIGGERED.name());
                 ps1.setInt(2, slId);
                 ps1.executeUpdate();
@@ -94,7 +94,7 @@ public class StopLossMonitor extends Thread {
             PreparedStatement ps2 = null;
             ResultSet rs = null;
             try {
-                ps2 = conn.prepareStatement(insertOrderSql);
+                ps2 = con.prepareStatement(insertOrderSql);
                 ps2.setInt(1, userId);
                 ps2.setString(2, ticker);
                 ps2.setString(3, OrderType.MARKET.name());
@@ -109,7 +109,7 @@ public class StopLossMonitor extends Thread {
                 if (ps2 != null) { try { ps2.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
             }
 
-            conn.commit();
+            con.commit();
 
             if (orderId != -1) {
                 // Log trigger
@@ -126,12 +126,12 @@ public class StopLossMonitor extends Thread {
             }
         } catch (SQLException e) {
             System.err.println("Error triggering stop loss: " + e.getMessage());
-            if (conn != null) {
-                try { conn.rollback(); } catch (SQLException ex) { System.err.println("Rollback failed: " + ex.getMessage()); }
+            if (con != null) {
+                try { con.rollback(); } catch (SQLException ex) { System.err.println("Rollback failed: " + ex.getMessage()); }
             }
         } finally {
-            if (conn != null) {
-                try { conn.close(); } catch (SQLException e) { System.err.println("Error closing connection: " + e.getMessage()); }
+            if (con != null) {
+                try { con.close(); } catch (SQLException e) { System.err.println("Error closing connection: " + e.getMessage()); }
             }
         }
     }

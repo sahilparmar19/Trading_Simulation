@@ -2,6 +2,7 @@ package engine;
 
 import db.DatabaseManager;
 import db.TradeTransaction;
+import ds.CustomLinkedList;
 import io.IOManager;
 import model.Order;
 import model.OrderStatus;
@@ -25,7 +26,9 @@ public class MatchingEngine extends Thread {
         while (running) {
             try {
                 // Loop through all registered order books
-                for (OrderBook book : OrderBook.getAll()) {
+                CustomLinkedList books = OrderBook.getAll();
+                for (int i = 0; i < books.size(); i++) {
+                    OrderBook book = (OrderBook) books.get(i);
                     matchOrdersForBook(book);
                 }
                 Thread.sleep(100);

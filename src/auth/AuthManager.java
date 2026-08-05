@@ -3,36 +3,55 @@ package auth;
 import db.DatabaseManager;
 import model.User;
 
-import java.security.MessageDigest;
-import java.nio.charset.StandardCharsets;
 import java.sql.*;
 
 public class AuthManager {
 
+    /**
+     * Simple password hashing using character manipulation.
+     *
+     * Java Concept (Sem 2 - Strings & Loops):
+     *   - Iterates over each character of the password
+     *   - Mixes position, ASCII value, and a fixed salt number
+     *   - Converts result to a hex-like string
+     *
+     * Note: This is a custom hash for learning purposes.
+     *       Real systems use SHA-256 or bcrypt (not in Sem 2 syllabus).
+     */
     public static String hashPassword(String password) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (Exception ex) {
-            throw new RuntimeException("SHA-256 digest failed", ex);
+        int salt = 31;          // mixing constant (like in Java's String.hashCode)
+        long hash = 5381;       // starting seed value
+
+        for (int i = 0; i < password.length(); i++) {
+            char c = password.charAt(i);
+            // Mix: multiply hash, add char value, mix with position
+            hash = (hash * salt) + (int) c + (i + 1);
         }
+
+        // Convert to a fixed-length hex string (always 16 characters)
+        String hex = Long.toHexString(Math.abs(hash));
+
+        // Pad with zeros if shorter than 16 characters
+        while (hex.length() < 16) {
+            hex = "0" + hex;
+        }
+
+        // Keep only last 16 characters if too long
+        if (hex.length() > 16) {
+            hex = hex.substring(hex.length() - 16);
+        }
+
+        return hex;
     }
 
     public static boolean signUp(String username, String password, String name) {
         String hashedPassword = hashPassword(password);
         String sql = "INSERT INTO users (username, password_hash, name, balance, is_admin, created_at) VALUES (?, ?, ?, 100000.00, FALSE, NOW())";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         try {
-            conn = DatabaseManager.getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = DatabaseManager.getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setString(1, username);
             pstmt.setString(2, hashedPassword);
             pstmt.setString(3, name);
@@ -43,19 +62,19 @@ public class AuthManager {
             return false;
         } finally {
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null)  { try { con.close();   } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
     }
 
     public static User login(String username, String password) {
         String hashedPassword = hashPassword(password);
         String sql = "SELECT * FROM users WHERE username = ? AND password_hash = ?";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = DatabaseManager.getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = DatabaseManager.getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setString(1, username);
             pstmt.setString(2, hashedPassword);
             rs = pstmt.executeQuery();
@@ -73,9 +92,9 @@ public class AuthManager {
         } catch (SQLException e) {
             System.err.println("Login failed: " + e.getMessage());
         } finally {
-            if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
+            if (rs != null)   { try { rs.close();   } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null)  { try { con.close();   } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
         return null;
     }

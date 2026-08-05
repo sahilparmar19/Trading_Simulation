@@ -41,12 +41,12 @@ public class DatabaseManager {
     public static int insertOrder(Order order) {
         String sql = "INSERT INTO orders (user_id, ticker, is_buy, order_type, price, quantity, stop_price, status, timestamp) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING order_id";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setInt(1, order.getUserId());
             pstmt.setString(2, order.getTicker());
             pstmt.setBoolean(3, order.isBuy());
@@ -68,7 +68,7 @@ public class DatabaseManager {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
         return -1;
     }
@@ -76,11 +76,11 @@ public class DatabaseManager {
     // Update order status and quantity
     public static void updateOrder(int orderId, OrderStatus status, int quantity) {
         String sql = "UPDATE orders SET status = ?, quantity = ? WHERE order_id = ?";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setString(1, status.name());
             pstmt.setInt(2, quantity);
             pstmt.setInt(3, orderId);
@@ -89,18 +89,18 @@ public class DatabaseManager {
             System.err.println("Error updating order: " + e.getMessage());
         } finally {
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
     }
 
     // Update user balance
     public static void updateBalance(int userId, double amount) {
         String sql = "UPDATE users SET balance = balance + ? WHERE user_id = ?";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setDouble(1, amount);
             pstmt.setInt(2, userId);
             pstmt.executeUpdate();
@@ -108,19 +108,19 @@ public class DatabaseManager {
             System.err.println("Error updating balance: " + e.getMessage());
         } finally {
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
     }
 
     // Get user balance
     public static double getUserBalance(int userId) {
         String sql = "SELECT balance FROM users WHERE user_id = ?";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setInt(1, userId);
             rs = pstmt.executeQuery();
             if (rs.next()) {
@@ -131,7 +131,7 @@ public class DatabaseManager {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
         return 0.0;
     }
@@ -140,10 +140,10 @@ public class DatabaseManager {
     public static void updatePortfolio(int userId, String ticker, int quantityChange, double price) {
         // We need to calculate the new average buy price if we are buying (quantityChange > 0)
         // If we are selling, we just decrease the quantity. If quantity becomes 0, we can remove or keep at 0.
-        Connection conn = null;
+        Connection con = null;
         try {
-            conn = getConnection();
-            conn.setAutoCommit(false);
+            con = getConnection();
+            con.setAutoCommit(false);
 
             // Fetch current portfolio
             String selectSql = "SELECT quantity, avg_buy_price FROM portfolio WHERE user_id = ? AND ticker = ?";
@@ -154,7 +154,7 @@ public class DatabaseManager {
             PreparedStatement selectPstmt = null;
             ResultSet rs = null;
             try {
-                selectPstmt = conn.prepareStatement(selectSql);
+                selectPstmt = con.prepareStatement(selectSql);
                 selectPstmt.setInt(1, userId);
                 selectPstmt.setString(2, ticker);
                 rs = selectPstmt.executeQuery();
@@ -181,7 +181,7 @@ public class DatabaseManager {
                 String deleteSql = "DELETE FROM portfolio WHERE user_id = ? AND ticker = ?";
                 PreparedStatement deletePstmt = null;
                 try {
-                    deletePstmt = conn.prepareStatement(deleteSql);
+                    deletePstmt = con.prepareStatement(deleteSql);
                     deletePstmt.setInt(1, userId);
                     deletePstmt.setString(2, ticker);
                     deletePstmt.executeUpdate();
@@ -193,7 +193,7 @@ public class DatabaseManager {
                     String updateSql = "UPDATE portfolio SET quantity = ?, avg_buy_price = ? WHERE user_id = ? AND ticker = ?";
                     PreparedStatement updatePstmt = null;
                     try {
-                        updatePstmt = conn.prepareStatement(updateSql);
+                        updatePstmt = con.prepareStatement(updateSql);
                         updatePstmt.setInt(1, newQty);
                         updatePstmt.setDouble(2, newAvg);
                         updatePstmt.setInt(3, userId);
@@ -206,7 +206,7 @@ public class DatabaseManager {
                     String insertSql = "INSERT INTO portfolio (user_id, ticker, quantity, avg_buy_price) VALUES (?, ?, ?, ?)";
                     PreparedStatement insertPstmt = null;
                     try {
-                        insertPstmt = conn.prepareStatement(insertSql);
+                        insertPstmt = con.prepareStatement(insertSql);
                         insertPstmt.setInt(1, userId);
                         insertPstmt.setString(2, ticker);
                         insertPstmt.setInt(3, newQty);
@@ -217,25 +217,25 @@ public class DatabaseManager {
                     }
                 }
             }
-            conn.commit();
+            con.commit();
         } catch (SQLException e) {
             System.err.println("Error updating portfolio: " + e.getMessage());
         } finally {
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
     }
 
     // Get user portfolio holdings
-    public static CustomLinkedList<PortfolioHolding> getPortfolio(int userId) {
-        CustomLinkedList<PortfolioHolding> holdings = new CustomLinkedList<>();
+    public static CustomLinkedList getPortfolio(int userId) {
+        CustomLinkedList holdings = new CustomLinkedList();
         String sql = "SELECT p.ticker, s.company_name, p.quantity, p.avg_buy_price, s.current_price " +
                      "FROM portfolio p JOIN stocks s ON p.ticker = s.ticker WHERE p.user_id = ?";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setInt(1, userId);
             rs = pstmt.executeQuery();
             while (rs.next()) {
@@ -251,7 +251,7 @@ public class DatabaseManager {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
         return holdings;
     }
@@ -259,12 +259,12 @@ public class DatabaseManager {
     // Get stock by ticker
     public static Stock getStock(String ticker) {
         String sql = "SELECT * FROM stocks WHERE ticker = ?";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setString(1, ticker);
             rs = pstmt.executeQuery();
             if (rs.next()) {
@@ -275,21 +275,21 @@ public class DatabaseManager {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
         return null;
     }
 
     // Search stocks by name
-    public static CustomLinkedList<Stock> getStocksByName(String name) {
-        CustomLinkedList<Stock> list = new CustomLinkedList<>();
+    public static CustomLinkedList getStocksByName(String name) {
+        CustomLinkedList list = new CustomLinkedList();
         String sql = "SELECT s.* FROM stocks s WHERE LOWER(s.company_name) LIKE ? OR LOWER(s.ticker) LIKE ? AND s.is_listed = TRUE";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setString(1, "%" + name.toLowerCase() + "%");
             pstmt.setString(2, "%" + name.toLowerCase() + "%");
             rs = pstmt.executeQuery();
@@ -301,22 +301,22 @@ public class DatabaseManager {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
         return list;
     }
 
     // Search stocks by sector name
-    public static CustomLinkedList<Stock> getStocksBySector(String sectorName) {
-        CustomLinkedList<Stock> list = new CustomLinkedList<>();
+    public static CustomLinkedList getStocksBySector(String sectorName) {
+        CustomLinkedList list = new CustomLinkedList();
         String sql = "SELECT s.* FROM stocks s JOIN sectors sec ON s.sector_id = sec.sector_id " +
                      "WHERE LOWER(sec.sector_name) LIKE ? AND s.is_listed = TRUE";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setString(1, "%" + sectorName.toLowerCase() + "%");
             rs = pstmt.executeQuery();
             while (rs.next()) {
@@ -327,21 +327,21 @@ public class DatabaseManager {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
         return list;
     }
 
     // Get all sector names (sector_id -> sector_name)
-    public static CustomLinkedList<SectorInfo> getAllSectors() {
-        CustomLinkedList<SectorInfo> list = new CustomLinkedList<>();
+    public static CustomLinkedList getAllSectors() {
+        CustomLinkedList list = new CustomLinkedList();
         String sql = "SELECT sector_id, sector_name FROM sectors ORDER BY sector_id ASC";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 list.addLast(new SectorInfo(rs.getInt("sector_id"), rs.getString("sector_name")));
@@ -351,21 +351,21 @@ public class DatabaseManager {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
         return list;
     }
 
     // Get all listed stocks under a specific sector ID
-    public static CustomLinkedList<Stock> getStocksBySectorId(int sectorId) {
-        CustomLinkedList<Stock> list = new CustomLinkedList<>();
+    public static CustomLinkedList getStocksBySectorId(int sectorId) {
+        CustomLinkedList list = new CustomLinkedList();
         String sql = "SELECT s.* FROM stocks s WHERE s.sector_id = ? AND s.is_listed = TRUE ORDER BY s.ticker ASC";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setInt(1, sectorId);
             rs = pstmt.executeQuery();
             while (rs.next()) {
@@ -376,7 +376,7 @@ public class DatabaseManager {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
         return list;
     }
@@ -405,8 +405,8 @@ public class DatabaseManager {
     }
 
     // Get price history with period filter (7D / 1M / 6M / 52W)
-    public static CustomLinkedList<PriceHistory> getPriceHistory(String ticker, String period) {
-        CustomLinkedList<PriceHistory> history = new CustomLinkedList<>();
+    public static CustomLinkedList getPriceHistory(String ticker, String period) {
+        CustomLinkedList history = new CustomLinkedList();
 
         // Compute cutoff time in Java — avoids JDBC INTERVAL casting issues
         long nowMs = System.currentTimeMillis();
@@ -424,12 +424,12 @@ public class DatabaseManager {
         Timestamp cutoff = new Timestamp(cutoffMs);
 
         String sql = "SELECT * FROM price_history WHERE ticker = ? AND recorded_at >= ? ORDER BY recorded_at ASC";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setString(1, ticker);
             pstmt.setTimestamp(2, cutoff);
             rs = pstmt.executeQuery();
@@ -445,23 +445,23 @@ public class DatabaseManager {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
         return history;
     }
 
 
     // Get top gainers
-    public static CustomLinkedList<Stock> getTopGainers(int n) {
-        CustomLinkedList<Stock> list = new CustomLinkedList<>();
+    public static CustomLinkedList getTopGainers(int n) {
+        CustomLinkedList list = new CustomLinkedList();
         String sql = "SELECT *, ((current_price - prev_close) / prev_close * 100) AS pct_change " +
                      "FROM stocks WHERE is_listed = TRUE AND prev_close > 0 ORDER BY pct_change DESC LIMIT ?";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setInt(1, n);
             rs = pstmt.executeQuery();
             while (rs.next()) {
@@ -472,22 +472,22 @@ public class DatabaseManager {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
         return list;
     }
 
     // Get top losers
-    public static CustomLinkedList<Stock> getTopLosers(int n) {
-        CustomLinkedList<Stock> list = new CustomLinkedList<>();
+    public static CustomLinkedList getTopLosers(int n) {
+        CustomLinkedList list = new CustomLinkedList();
         String sql = "SELECT *, ((current_price - prev_close) / prev_close * 100) AS pct_change " +
                      "FROM stocks WHERE is_listed = TRUE AND prev_close > 0 ORDER BY pct_change ASC LIMIT ?";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setInt(1, n);
             rs = pstmt.executeQuery();
             while (rs.next()) {
@@ -498,14 +498,14 @@ public class DatabaseManager {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
         return list;
     }
 
     // Average P&L grouped by sector
-    public static CustomLinkedList<SectorPnL> getSectorPnL() {
-        CustomLinkedList<SectorPnL> list = new CustomLinkedList<>();
+    public static CustomLinkedList getSectorPnL() {
+        CustomLinkedList list = new CustomLinkedList();
         String sql = "SELECT sec.sector_name, " +
                      "COALESCE(AVG((s.current_price - p.avg_buy_price) * p.quantity), 0) AS avg_pnl, " +
                      "COALESCE(AVG(((s.current_price - p.avg_buy_price) / p.avg_buy_price) * 100), 0) AS avg_pnl_pct " +
@@ -513,12 +513,12 @@ public class DatabaseManager {
                      "JOIN stocks s ON p.ticker = s.ticker " +
                      "JOIN sectors sec ON s.sector_id = sec.sector_id " +
                      "GROUP BY sec.sector_name";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 list.addLast(new SectorPnL(
@@ -532,7 +532,7 @@ public class DatabaseManager {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
         return list;
     }
@@ -540,11 +540,11 @@ public class DatabaseManager {
     // Watchlist methods
     public static void addToWatchlist(int userId, String ticker) {
         String sql = "INSERT INTO watchlist (user_id, ticker) VALUES (?, ?) ON CONFLICT DO NOTHING";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setInt(1, userId);
             pstmt.setString(2, ticker);
             pstmt.executeUpdate();
@@ -552,17 +552,17 @@ public class DatabaseManager {
             System.err.println("Error adding to watchlist: " + e.getMessage());
         } finally {
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
     }
 
     public static void removeFromWatchlist(int userId, String ticker) {
         String sql = "DELETE FROM watchlist WHERE user_id = ? AND ticker = ?";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setInt(1, userId);
             pstmt.setString(2, ticker);
             pstmt.executeUpdate();
@@ -570,19 +570,19 @@ public class DatabaseManager {
             System.err.println("Error removing from watchlist: " + e.getMessage());
         } finally {
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
     }
 
-    public static CustomLinkedList<Stock> getWatchlist(int userId) {
-        CustomLinkedList<Stock> list = new CustomLinkedList<>();
+    public static CustomLinkedList getWatchlist(int userId) {
+        CustomLinkedList list = new CustomLinkedList();
         String sql = "SELECT s.* FROM watchlist w JOIN stocks s ON w.ticker = s.ticker WHERE w.user_id = ?";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setInt(1, userId);
             rs = pstmt.executeQuery();
             while (rs.next()) {
@@ -593,7 +593,7 @@ public class DatabaseManager {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
         return list;
     }
@@ -649,15 +649,15 @@ public class DatabaseManager {
     }
 
     // Get pending limit orders for a user
-    public static CustomLinkedList<Order> getPendingLimitOrders(int userId) {
-        CustomLinkedList<Order> list = new CustomLinkedList<>();
+    public static CustomLinkedList getPendingLimitOrders(int userId) {
+        CustomLinkedList list = new CustomLinkedList();
         String sql = "SELECT * FROM orders WHERE user_id = ? AND order_type = ? AND status = ? ORDER BY timestamp DESC";
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setInt(1, userId);
             pstmt.setString(2, OrderType.LIMIT.name());
             pstmt.setString(3, OrderStatus.PENDING.name());
@@ -681,7 +681,7 @@ public class DatabaseManager {
         } finally {
             if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
             if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
         return list;
     }
@@ -690,15 +690,15 @@ public class DatabaseManager {
     public static void updateStockPriceAndHistory(String ticker, double price) {
         String updateStockSql = "UPDATE stocks SET current_price = ? WHERE ticker = ?";
         String insertHistorySql = "INSERT INTO price_history (ticker, price, recorded_at) VALUES (?, ?, NOW())";
-        Connection conn = null;
+        Connection con = null;
         try {
-            conn = getConnection();
-            conn.setAutoCommit(false);
+            con = getConnection();
+            con.setAutoCommit(false);
             PreparedStatement ps1 = null;
             PreparedStatement ps2 = null;
             try {
-                ps1 = conn.prepareStatement(updateStockSql);
-                ps2 = conn.prepareStatement(insertHistorySql);
+                ps1 = con.prepareStatement(updateStockSql);
+                ps2 = con.prepareStatement(insertHistorySql);
                 ps1.setDouble(1, price);
                 ps1.setString(2, ticker);
                 ps1.executeUpdate();
@@ -707,9 +707,9 @@ public class DatabaseManager {
                 ps2.setDouble(2, price);
                 ps2.executeUpdate();
 
-                conn.commit();
+                con.commit();
             } catch (SQLException e) {
-                conn.rollback();
+                con.rollback();
                 throw e;
             } finally {
                 if (ps1 != null) { try { ps1.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
@@ -718,7 +718,7 @@ public class DatabaseManager {
         } catch (SQLException e) {
             System.err.println("Error updating stock price and history: " + e.getMessage());
         } finally {
-            if (conn != null) { try { conn.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
     }
 }

@@ -9,7 +9,7 @@ import java.util.Scanner;
 
 public class PortfolioView {
 
-    public static void render(Scanner scanner) {
+    public static void render(Scanner sc) {
         if (!Session.isLoggedIn()) {
             System.out.println("Please log in first.");
             return;
@@ -17,7 +17,7 @@ public class PortfolioView {
 
         int userId = Session.getCurrentUser().getUserId();
         double balance = DatabaseManager.getUserBalance(userId);
-        CustomLinkedList<DatabaseManager.PortfolioHolding> holdings = DatabaseManager.getPortfolio(userId);
+        CustomLinkedList holdings = DatabaseManager.getPortfolio(userId);
 
         System.out.println("\n=========================================================================");
         System.out.printf(" PORTFOLIO VIEW - User: %s%n", Session.getCurrentUser().getName());
@@ -35,7 +35,8 @@ public class PortfolioView {
             double totalCurrentVal = 0;
             double totalPnL = 0;
 
-            for (DatabaseManager.PortfolioHolding holding : holdings) {
+            for (int i = 0; i < holdings.size(); i++) {
+                DatabaseManager.PortfolioHolding holding = (DatabaseManager.PortfolioHolding) holdings.get(i);
                 totalCostVal += holding.avgBuyPrice * holding.quantity;
                 totalCurrentVal += holding.currentPrice * holding.quantity;
                 totalPnL += holding.getPnL();
@@ -57,7 +58,7 @@ public class PortfolioView {
         System.out.println(" [1] Export Portfolio Report (CSV)");
         System.out.println(" [2] Go Back");
         System.out.print(" Select option: ");
-        String choice = scanner.nextLine().trim();
+        String choice = sc.nextLine().trim();
 
         if (choice.equals("1")) {
             String path = ReportGenerator.exportPortfolio(userId);
