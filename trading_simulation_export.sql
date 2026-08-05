@@ -247,16 +247,16 @@ INSERT INTO stocks (ticker, company_name, sector_id, current_price, open_price, 
 ('BIOCON',   'Biocon Limited',                    5,  260.00,  258.00,  257.00,  310000.00, 35.50, 2.40, 0.0700, 0.0300, 1200000, 60.60, 19.40, 20.00, TRUE, 'NSE');
 
 -- ----- Users -----
--- Passwords (SHA-256 hash):
---   adminpassword   -> 749f09bade8aca755660eeb17792da880218d4fbdc4e25fbec279d7fe9f65d70
---   alicepassword   -> cb824cd5fe4950a77e36776d275f8f7039682babd490d5da3bc8fd31f4c2254c
---   bobpassword     -> bc786c379d8b4334faa1f5ed4428d53ed5fbf6247a5974a72eac7fd5c13410d8
---   charliepassword -> 34f06c2c5455da4dd905c43bda6ddf990e1c619da2d44fd4c809df6791e8eb80
+-- Passwords (Custom hash):
+--   adminpassword   -> 0a6506ccf4274e0c
+--   alicepassword   -> 0d2af0bfee01203d
+--   bobpassword     -> 6a94eeed9c15f531
+--   charliepassword -> 1deb414da3517f90
 INSERT INTO users (user_id, username, password_hash, name, balance, is_admin, created_at) VALUES
-(1, 'admin',   '749f09bade8aca755660eeb17792da880218d4fbdc4e25fbec279d7fe9f65d70', 'System Administrator', 1000000.00, TRUE,  NOW() - INTERVAL '10 days'),
-(2, 'alice',   'cb824cd5fe4950a77e36776d275f8f7039682babd490d5da3bc8fd31f4c2254c', 'Alice Sharma',          150000.00, FALSE, NOW() - INTERVAL '5 days'),
-(3, 'bob',     'bc786c379d8b4334faa1f5ed4428d53ed5fbf6247a5974a72eac7fd5c13410d8', 'Bob Patel',              85000.00, FALSE, NOW() - INTERVAL '4 days'),
-(4, 'charlie', '34f06c2c5455da4dd905c43bda6ddf990e1c619da2d44fd4c809df6791e8eb80', 'Charlie Sen',           200000.00, FALSE, NOW() - INTERVAL '3 days');
+(1, 'admin',   '0a6506ccf4274e0c', 'System Administrator', 1000000.00, TRUE,  NOW() - INTERVAL '10 days'),
+(2, 'alice',   '0d2af0bfee01203d', 'Alice Sharma',          150000.00, FALSE, NOW() - INTERVAL '5 days'),
+(3, 'bob',     '6a94eeed9c15f531', 'Bob Patel',              85000.00, FALSE, NOW() - INTERVAL '4 days'),
+(4, 'charlie', '1deb414da3517f90', 'Charlie Sen',           200000.00, FALSE, NOW() - INTERVAL '3 days');
 
 -- Keep sequence in sync with hardcoded IDs
 SELECT setval('users_user_id_seq', 4);
