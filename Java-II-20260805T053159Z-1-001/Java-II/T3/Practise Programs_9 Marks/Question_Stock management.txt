@@ -1,0 +1,134 @@
+ 
+
+### Follow these instructions for Developing the Stock Management System
+
+#### 1. **Create the `Stock` Class**
+
+- **Attributes**: 
+  - `name` (String)
+  - `price` (double)
+  - `quantity` (int)
+
+- **Constructor**: Initialize the attributes.
+
+- **toString() Method**: Override the `toString()` method to represent the stock in a comma-separated format (`name,price,quantity`).
+
+#### 2. **Create the `StockManagement` Class**
+
+- **Attributes**:
+  - `Map<String, Stock> stocks = new HashMap<>();` to store available stocks.
+  - `Map<String, Stock> portfolio = new HashMap<>();` to store purchased stocks.
+  - `double fundBalance = 50000.0;` to store the available fund balance.
+  - `String STOCKS_FILE_PATH = "stocks.txt";` for the path to the stocks file.
+  - `String WATCHLIST_FILE_PATH = "watchlist.txt";` for the path to the watchlist file.
+  - `String HISTORY_FILE_PATH = "history.txt";` for the path to the order history file.
+
+- **Methods**:
+  - **Constructor**: Initialize the system by loading initial stocks from `stocks.txt`.
+
+  - **loadWatchlist()**:
+    - Read stocks from `watchlist.txt` and load them into the `stocks` map.
+    - Print an error message if an error occurs while loading the watchlist.
+
+  - **displayStocks()**:
+    - Display all stocks from the `stocks` map.
+    - Print "No stocks available." if there are no stocks.
+
+  - **displayPortfolio()**:
+    - Display all stocks in the `portfolio` map along with their quantities.
+    - Calculate and display the total portfolio value.
+    - Print "No stocks in portfolio." if the portfolio is empty.
+
+  - **saveOrderHistory(String action, Stock stock, int quantity)**:
+    - Append the order history (BUY or SELL) to `history.txt`.
+
+  - **buyStock(String name, int quantity)**:
+    - Buy a specified quantity of a stock from the `stocks` map.
+    - Update the `portfolio` map and deduct the cost from `fundBalance`.
+    - Save the order to the history file.
+    - Print appropriate messages for successful purchase, insufficient funds, or stock not found in the watchlist.
+
+  - **sellStock(String name, int quantity)**:
+    - Sell a specified quantity of a stock from the `portfolio` map.
+    - Update the `fundBalance` and remove the stock from the portfolio if its quantity becomes zero.
+    - Save the order to the history file.
+    - Print appropriate messages for successful sale, insufficient stock, or stock not found in the portfolio.
+
+  - **loadStocks()**:
+    - Read initial stocks from `stocks.txt` and load them into the `stocks` map.
+    - Print an error message if an error occurs while loading the stock data.
+
+  - **displayOrderHistory()**:
+    - Read and display all entries from the order history file (`history.txt`).
+    - Print an error message if an error occurs while reading the order history.
+
+  - **main(String[] args)**:
+    - Provide a console-based menu for user interaction.
+    - Options: Display stocks from watchlist, buy stock, sell stock, display portfolio, display order history, and exit.
+    - Handle invalid menu choices gracefully.
+
+### Example Text Files
+
+#### `stocks.txt`
+```
+Apple,150.0,100
+Microsoft,300.0,50
+Amazon,2000.0,20
+```
+
+#### `watchlist.txt`
+```
+Apple,150.0
+Tesla,700.0
+```
+
+#### `history.txt`
+Initially, this file will be empty. It will be populated with order history as the program runs.
+
+### Example Usage
+
+1. **Display stocks from watchlist**:
+   - Input: `1`
+   - Output:
+     ```
+     Watchlist data loaded.
+     Apple,150.0,0
+     Tesla,700.0,0
+     ```
+
+2. **Buy stocks**:
+   - Input: `2`
+     - Enter stock name: `Apple`
+     - Enter quantity to buy: `10`
+   - Output:
+     ```
+     Bought 10 of Apple
+     Remaining fund balance: ₹48500.0
+     ```
+
+3. **Sell stocks**:
+   - Input: `3`
+     - Enter stock name: `Apple`
+     - Enter quantity to sell: `5`
+   - Output:
+     ```
+     Sold 5 of Apple
+     Updated fund balance: ₹49250.0
+     ```
+
+4. **Display portfolio**:
+   - Input: `4`
+   - Output:
+     ```
+     Apple,150.0,5
+     Total portfolio value: ₹750.0
+     ```
+
+5. **Display order history**:
+   - Input: `5`
+   - Output (assuming the above buy and sell operations):
+     ```
+     BUY: Apple, Quantity: 10, Price: 150.0
+     SELL: Apple, Quantity: 5, Price: 150.0
+     ```
+

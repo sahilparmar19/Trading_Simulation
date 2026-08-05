@@ -1,0 +1,267 @@
+import java.io.*;
+import java.util.*;
+
+public class StockManagement {
+    Map<String, Stock> stocks = new HashMap<>();
+    Map<String, Stock> portfolio = new HashMap<>();
+    double fundBalance = 50000.0;
+    static final String STOCKS_FILE_PATH = "stocks.txt";
+    static final String WATCHLIST_FILE_PATH = "watchlist.txt";
+    static final String HISTORY_FILE_PATH = "history.txt";
+
+    public StockManagement() throws IOException {
+        loadStocks();
+    }
+
+    void loadWatchlist() throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader(WATCHLIST_FILE_PATH));
+        String line;
+        while ((line = br.readLine()) != null) {
+            String[] parts = line.split(",");
+            String name = parts[0];
+            double price = Double.parseDouble(parts[1]);
+            int quantity = Integer.parseInt(parts[2]);
+            stocks.put(name, new Stock(name, price, quantity));
+        }
+        br.close();
+        System.out.println("Watchlist data loaded.");
+    }
+
+    void displayStocks() {
+        if (stocks.isEmpty()) {
+            System.out.println("No stocks available.");
+        } else {
+            for (Stock stock : stocks.values()) {
+                System.out.println(stock);
+            }
+        }
+    }
+
+    void displayPortfolio() {
+        if (portfolio.isEmpty()) {
+            System.out.println("No stocks in portfolio.");
+        } else {
+            double totalValue = 0.0;
+            for (Stock stock : portfolio.values()) {
+                System.out.println(stock);
+                totalValue += stock.price * stock.quantity;
+            }
+            System.out.println("Total portfolio value: ₹" + totalValue);
+        }
+    }
+
+    void saveOrderHistory(String action, Stock stock, int quantity) throws IOException {
+        BufferedWriter bw = new BufferedWriter(new FileWriter(HISTORY_FILE_PATH, true));
+        bw.write(action + ": " + stock.name + ", Quantity: " + quantity + ", Price: " + stock.price);
+        bw.newLine();
+        bw.close();
+    }
+
+    void buyStock(String name, int quantity) throws IOException {
+        Stock stock = stocks.get(name);
+        if (stock != null) {
+            double totalCost = stock.price * quantity;
+            if (totalCost > fundBalance) {
+                System.out.println("Insufficient funds to buy " + quantity + " of " + name);
+            } else {
+                Stock portfolioStock = portfolio.get(name);
+                if (portfolioStock == null) {
+                    portfolioStock = new Stock(name, stock.price, quantity);
+                    portfolio.put(name, portfolioStock);
+                } else {
+                    portfolioStock.quantity += quantity;
+                }
+                fundBalance -= totalCost;
+                saveOrderHistory("BUY", stock, quantity);
+                System.out.println("Bought " + quantity + " of " + name);
+                System.out.println("Remaining fund balance: ₹" + fundBalance);
+            }
+        } else {
+            System.out.println("Stock not found in watchlist!");
+        }
+    }
+
+    void sellStock(String name, int quantity) throws IOException {
+        Stock portfolioStock = portfolio.get(name);
+        if (portfolioStock != null && portfolioStock.quantity >= quantity) {
+            portfolioStock.quantity -= quantity;
+            double totalRevenue = portfolioStock.price * quantity;
+            fundBalance += totalRevenue;
+            if (portfolioStock.quantity == 0) {
+                portfolio.remove(name);
+            }
+            saveOrderHistory("SELL", portfolioStock, quantity);
+            System.out.println("Sold " + quantity + " of " + name);
+            System.out.println("Updated fund balance: ₹" + fundBalance);
+        } else {
+            System.out.println("Not enough stock to sell or stock not found in portfolio!");
+        }
+    }
+
+    void loadStocks() throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader(STOCKS_FILE_PATH));
+        String line;
+        while ((line = br.readLine()) != null) {
+            String[] parts = line.split(",");
+            String name = parts[0];
+            double price = Double.parseDouble(parts[1]);
+            int quantity = Integer.parseInt(parts[2]);
+            stocks.put(name, new Stock(name, price, quantity));
+        }
+        br.close();
+        System.out.println("Stock data loaded.");
+    }
+
+    void displayOrderHistory() throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader(HISTORY_FILE_PATH));
+        String line;
+        while ((line = br.readLine()) != null) {
+            System.out.println(line);
+        }
+        br.close();
+    }
+
+    public static void main(String[] args) {
+        try {
+            StockManagement sm = new StockManagement();
+            Scanner scanner = new Scanner(System.in);
+            String choice;
+
+            do {
+                System.out.println("1. Display stocks from watchlist");
+                System.out.println("2. Buy Stock");
+                System.out.println("3. Sell Stock");
+                System.out.println("4. Display Portfolio");
+                System.out.println("5. Display Order History");
+                System.out.println("6. Exit");
+                System.out.print("Enter your choice: ");
+                choice = scanner.nextLine();
+
+                switch (choice) {
+                    case "1":
+                        sm.loadWatchlist();
+                        sm.displayStocks();
+                        break;
+                    case "2":
+                        System.out.print("Enter stock name: ");
+                        String buyName = scanner.nextLine();
+                        System.out.print("Enter quantity to buy: ");
+                        int buyQuantity = scanner.nextInt();
+                        scanner.nextLine();  // Consume newline
+                        sm.buyStock(buyName, buyQuantity);
+                        break;
+                    case "3":
+                        System.out.print("Enter stock name: ");
+                        String sellName = scanner.nextLine();
+                        System.out.print("Enter quantity to sell: ");
+                        int sellQuantity = scanner.nextInt();
+                        scanner.nextLine();  // Consume newline
+                        sm.sellStock(sellName, sellQuantity);
+                        break;
+                    case "4":
+                        sm.displayPortfolio();
+                        break;
+                    case "5":
+                        sm.displayOrderHistory();
+                        break;
+                    case "6":
+                        System.out.println("Exiting...");
+                        break;
+                    default:
+                        System.out.println("Invalid choice. Please try again.");
+                }
+            } while (!choice.equals("6"));
+
+            scanner.close();
+        } catch (IOException e) {
+            System.out.println("An error occurred: " + e.getMessage());
+        }
+    }
+}
+
+class Stock {
+    String name;
+    double price;
+    int quantity;
+
+    public Stock(String name, double price, int quantity) {
+        this.name = name;
+        this.price = price;
+        this.quantity = quantity;
+    }
+
+    @Override
+    public String toString() {
+        return name + "," + price + "," + quantity;
+    }
+}
+
+/*
+
+### `stocks.txt`
+```txt
+Apple,150.0,100
+Microsoft,300.0,50
+Amazon,2000.0,20
+```
+
+### `watchlist.txt`
+```txt
+Apple,150.0,0
+Tesla,700.0,0
+```
+
+### `history.txt`
+Initially, this file will be empty. It will be populated with order history as the program runs and processes buy/sell operations.
+
+### Usage Example:
+When you run the program, it will read from these files. Ensure these files are placed in the same directory as your Java program.
+
+### Example Commands:
+1. To display stocks from the watchlist:
+   - Input: `1`
+   - Output:
+     ```
+     Watchlist data loaded.
+     Apple,150.0,0
+     Tesla,700.0,0
+     ```
+
+2. To buy stocks:
+   - Input: `2`
+     - Enter stock name: `Apple`
+     - Enter quantity to buy: `10`
+   - Output:
+     ```
+     Bought 10 of Apple
+     Remaining fund balance: ₹48500.0
+     ```
+
+3. To sell stocks:
+   - Input: `3`
+     - Enter stock name: `Apple`
+     - Enter quantity to sell: `5`
+   - Output:
+     ```
+     Sold 5 of Apple
+     Updated fund balance: ₹49250.0
+     ```
+
+4. To display portfolio:
+   - Input: `4`
+   - Output:
+     ```
+     Apple,150.0,5
+     Total portfolio value: ₹750.0
+     ```
+
+5. To display order history:
+   - Input: `5`
+   - Output (assuming the above buy and sell operations):
+     ```
+     BUY: Apple, Quantity: 10, Price: 150.0
+     SELL: Apple, Quantity: 5, Price: 150.0
+     ```
+
+Place the content of each text block into the respective files (`stocks.txt`, `watchlist.txt`, and `history.txt`) and ensure they are in the correct location relative to your Java program. This setup will allow the `StockManagement` system to function correctly.
+*/
