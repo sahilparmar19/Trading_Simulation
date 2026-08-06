@@ -95,6 +95,15 @@ public class BotTrader extends Thread {
                 boolean isBuy = random.nextBoolean();
                 int qty = 1 + random.nextInt(15); // 1 to 15 shares
 
+                // Ensure bot has sufficient balance for BUY orders to avoid trigger errors
+                if (isBuy) {
+                    double requiredAmount = price * qty;
+                    double currentBalance = DatabaseManager.getUserBalance(botUserId);
+                    if (currentBalance < requiredAmount) {
+                        DatabaseManager.updateBalance(botUserId, Math.max(100000.00, requiredAmount * 2));
+                    }
+                }
+
                 // Create Order POJO (LIMIT order)
                 Order order = new Order(
                     0, 

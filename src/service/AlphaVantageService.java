@@ -127,12 +127,8 @@ public class AlphaVantageService {
         if (lastFailureTime != 0L) {
             long msSinceFailure = System.currentTimeMillis() - lastFailureTime;
             if (msSinceFailure < FAILURE_COOLDOWN_MS) {
-                // Still within cooldown window — skip the HTTP call entirely.
-                // BotTrader will use the random price fallback.
-                System.err.println("[AlphaVantageService] In failure cooldown for "
-                        + symbol + " ("
-                        + (FAILURE_COOLDOWN_MS - msSinceFailure) / 1000
-                        + "s remaining). Using simulator fallback.");
+                // Still within cooldown window — skip the HTTP call silently.
+                // BotTrader will use the random price fallback without log spam.
                 return PRICE_UNAVAILABLE;
             }
             // Cooldown has expired — reset and allow a new attempt
