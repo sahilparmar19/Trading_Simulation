@@ -87,39 +87,15 @@ public class AlphaVantageService {
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(TIMEOUT_SECONDS))
                 .build();
-        System.out.println("[AlphaVantageService] Initialized. API key loaded: "
-                + (apiKey.equals("demo") ? "DEMO (limited to AAPL)" : "custom key"));
     }
 
-    /**
-     * Returns the latest price for the given stock symbol.
-     *
-     * Strategy:
-     *   1. If a fresh cached price exists (fetched within CACHE_TTL_MS), return it.
-     *   2. If the API is in a failure cooldown, return PRICE_UNAVAILABLE immediately.
-     *   3. Otherwise, call the Alpha Vantage API.
-     *   4. On success, store the price in the cache and return it.
-     *   5. On any failure, stamp lastFailureTime and return PRICE_UNAVAILABLE,
-     *      activating the cooldown for all subsequent calls.
-     *
-     * This method is synchronized so that concurrent BotTrader threads share
-     * the same cache and cooldown state safely.
-     *
-     * @param symbol  The ticker symbol (e.g. "AAPL", "RELIANCE.BSE")
-     * @return        The current price as a double, or PRICE_UNAVAILABLE (-1.0)
-     *                if the API call fails, times out, or returns invalid data.
-     */
     public synchronized double getCurrentPrice(String symbol) {
 
         // --- Cache check ---
         Long lastFetch = cacheFetchTime.get(symbol);
         if (lastFetch != null && (System.currentTimeMillis() - lastFetch) < CACHE_TTL_MS) {
             // Cache hit: price is still fresh, skip the HTTP call
-            double cached = priceCache.get(symbol);
-            System.out.println("[AlphaVantageService] Cache hit for " + symbol
-                    + " (age: " + (System.currentTimeMillis() - lastFetch) / 1000 + "s)"
-                    + " -> " + cached);
-            return cached;
+            return priceCache.get(symbol);
         }
         // Cache miss or expired — check the failure cooldown before hitting the API.
 
@@ -128,7 +104,6 @@ public class AlphaVantageService {
             long msSinceFailure = System.currentTimeMillis() - lastFailureTime;
             if (msSinceFailure < FAILURE_COOLDOWN_MS) {
                 // Still within cooldown window — skip the HTTP call silently.
-                // BotTrader will use the random price fallback without log spam.
                 return PRICE_UNAVAILABLE;
             }
             // Cooldown has expired — reset and allow a new attempt
@@ -151,8 +126,6 @@ public class AlphaVantageService {
                     httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() != 200) {
-                System.err.println("[AlphaVantageService] HTTP " + response.statusCode()
-                        + " for symbol: " + symbol + ". Starting " + FAILURE_COOLDOWN_MS / 1000 + "s cooldown.");
                 lastFailureTime = System.currentTimeMillis(); // activate cooldown
                 return PRICE_UNAVAILABLE;
             }
@@ -160,7 +133,6 @@ public class AlphaVantageService {
             double price = parsePrice(response.body(), symbol);
 
             if (price == PRICE_UNAVAILABLE) {
-                // parsePrice already printed the reason (rate-limit, bad data, etc.)
                 lastFailureTime = System.currentTimeMillis(); // activate cooldown
                 return PRICE_UNAVAILABLE;
             }
@@ -168,48 +140,23 @@ public class AlphaVantageService {
             // --- Cache store (only on success) ---
             priceCache.put(symbol, price);
             cacheFetchTime.put(symbol, System.currentTimeMillis());
-            System.out.println("[AlphaVantageService] Live fetch for " + symbol
-                    + " -> " + price + " (cached for " + CACHE_TTL_MS / 1000 + "s)");
             return price;
 
         } catch (InterruptedException e) {
             // Restore interrupted status and treat as unavailable
             Thread.currentThread().interrupt();
-            System.err.println("[AlphaVantageService] Request interrupted for: " + symbol
-                    + ". Starting " + FAILURE_COOLDOWN_MS / 1000 + "s cooldown.");
             lastFailureTime = System.currentTimeMillis(); // activate cooldown
             return PRICE_UNAVAILABLE;
         } catch (Exception e) {
-            // Catches IOException, URISyntaxException, network errors, etc.
-            System.err.println("[AlphaVantageService] Error fetching price for "
-                    + symbol + ": " + e.getMessage()
-                    + ". Starting " + FAILURE_COOLDOWN_MS / 1000 + "s cooldown.");
             lastFailureTime = System.currentTimeMillis(); // activate cooldown
             return PRICE_UNAVAILABLE;
         }
     }
 
-    /**
-     * Parses the "05. price" field from the Alpha Vantage JSON response.
-     *
-     * We deliberately avoid adding a JSON library and instead rely on the
-     * well-known, stable structure of the Alpha Vantage GLOBAL_QUOTE response.
-     *
-     * Example JSON:
-     *   {"Global Quote": {"01. symbol": "AAPL", "05. price": "213.54", ...}}
-     *
-     * Rate-limit / empty response example:
-     *   {"Note": "Thank you for using Alpha Vantage! ..."}
-     *   {"Information": "..."}
-     *
-     * @return parsed price, or PRICE_UNAVAILABLE on any parsing failure.
-     */
     private double parsePrice(String json, String symbol) {
         // Detect rate-limit or error messages from Alpha Vantage
         if (json.contains("\"Note\"") || json.contains("\"Information\"")
                 || json.contains("\"Error Message\"")) {
-            System.err.println("[AlphaVantageService] API limit or error response for "
-                    + symbol + ". Falling back to random price.");
             return PRICE_UNAVAILABLE;
         }
 
@@ -217,20 +164,15 @@ public class AlphaVantageService {
         final String PRICE_KEY = "\"05. price\"";
         int keyIndex = json.indexOf(PRICE_KEY);
         if (keyIndex == -1) {
-            System.err.println("[AlphaVantageService] Price key not found in response for: "
-                    + symbol);
             return PRICE_UNAVAILABLE;
         }
 
         // Extract the value after the key: "05. price": "213.54"
-        //                                               ^-start  ^-end
         int colonIndex  = json.indexOf(':', keyIndex);
         int quoteOpen   = json.indexOf('"', colonIndex + 1);
         int quoteClose  = json.indexOf('"', quoteOpen  + 1);
 
         if (colonIndex == -1 || quoteOpen == -1 || quoteClose == -1) {
-            System.err.println("[AlphaVantageService] Malformed price value in response for: "
-                    + symbol);
             return PRICE_UNAVAILABLE;
         }
 
@@ -238,14 +180,10 @@ public class AlphaVantageService {
         try {
             double price = Double.parseDouble(priceStr);
             if (price <= 0) {
-                System.err.println("[AlphaVantageService] Non-positive price received for: "
-                        + symbol);
                 return PRICE_UNAVAILABLE;
             }
             return price;
         } catch (NumberFormatException e) {
-            System.err.println("[AlphaVantageService] Cannot parse price '" + priceStr
-                    + "' for: " + symbol);
             return PRICE_UNAVAILABLE;
         }
     }
