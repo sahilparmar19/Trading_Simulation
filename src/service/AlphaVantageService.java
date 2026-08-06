@@ -7,6 +7,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -26,6 +28,15 @@ import java.util.Properties;
  *   - Returns -1.0 on ANY failure so the caller can fall back to random prices.
  *   - The API key is loaded once from config.properties at construction time.
  *   - A 5-second request timeout prevents the trading loop from hanging.
+ *   - Prices are cached per ticker for 60 seconds. Multiple bots requesting
+ *     the same ticker within that window share one API call. Only successful
+ *     prices are cached; failures are not, so the next call retries the API.
+ *   - Cache access is synchronized — safe for the 3 concurrent BotTrader threads.
+ *   - After any API failure (HTTP error, rate-limit, network exception) a 30-second
+ *     failure cooldown is activated. During the cooldown ALL tickers skip new HTTP
+ *     requests and return PRICE_UNAVAILABLE immediately, so bots fall back to the
+ *     random price simulator instead of queuing up blocked or rate-limited calls.
+ *     A fresh cached price always takes priority over the cooldown.
  */
 public class AlphaVantageService {
 
@@ -38,6 +49,28 @@ public class AlphaVantageService {
 
     // HTTP request timeout (seconds) — keeps the trading loop responsive
     private static final int TIMEOUT_SECONDS = 5;
+
+    // --- Price cache ---
+    // How long a cached price is considered fresh (milliseconds)
+    private static final long CACHE_TTL_MS = 60_000L; // 60 seconds
+
+    // ticker -> last successfully fetched price
+    // Guarded by the lock on this AlphaVantageService instance
+    private final Map<String, Double> priceCache     = new HashMap<>();
+
+    // ticker -> System.currentTimeMillis() when the price was fetched
+    private final Map<String, Long>   cacheFetchTime = new HashMap<>();
+    // --- end cache ---
+
+    // --- Failure cooldown ---
+    // How long to pause ALL new API calls after any failure (milliseconds)
+    private static final long FAILURE_COOLDOWN_MS = 30_000L; // 30 seconds
+
+    // Timestamp of the most recent API failure; 0 means no failure has occurred yet.
+    // A single global cooldown covers all tickers: if the API is down or rate-limited
+    // it is down for every symbol, so there is no point trying others either.
+    private long lastFailureTime = 0L;
+    // --- end failure cooldown ---
 
     private final String apiKey;
 
@@ -59,13 +92,54 @@ public class AlphaVantageService {
     }
 
     /**
-     * Returns the latest price for the given stock symbol from Alpha Vantage.
+     * Returns the latest price for the given stock symbol.
+     *
+     * Strategy:
+     *   1. If a fresh cached price exists (fetched within CACHE_TTL_MS), return it.
+     *   2. If the API is in a failure cooldown, return PRICE_UNAVAILABLE immediately.
+     *   3. Otherwise, call the Alpha Vantage API.
+     *   4. On success, store the price in the cache and return it.
+     *   5. On any failure, stamp lastFailureTime and return PRICE_UNAVAILABLE,
+     *      activating the cooldown for all subsequent calls.
+     *
+     * This method is synchronized so that concurrent BotTrader threads share
+     * the same cache and cooldown state safely.
      *
      * @param symbol  The ticker symbol (e.g. "AAPL", "RELIANCE.BSE")
      * @return        The current price as a double, or PRICE_UNAVAILABLE (-1.0)
      *                if the API call fails, times out, or returns invalid data.
      */
-    public double getCurrentPrice(String symbol) {
+    public synchronized double getCurrentPrice(String symbol) {
+
+        // --- Cache check ---
+        Long lastFetch = cacheFetchTime.get(symbol);
+        if (lastFetch != null && (System.currentTimeMillis() - lastFetch) < CACHE_TTL_MS) {
+            // Cache hit: price is still fresh, skip the HTTP call
+            double cached = priceCache.get(symbol);
+            System.out.println("[AlphaVantageService] Cache hit for " + symbol
+                    + " (age: " + (System.currentTimeMillis() - lastFetch) / 1000 + "s)"
+                    + " -> " + cached);
+            return cached;
+        }
+        // Cache miss or expired — check the failure cooldown before hitting the API.
+
+        // --- Failure cooldown check ---
+        if (lastFailureTime != 0L) {
+            long msSinceFailure = System.currentTimeMillis() - lastFailureTime;
+            if (msSinceFailure < FAILURE_COOLDOWN_MS) {
+                // Still within cooldown window — skip the HTTP call entirely.
+                // BotTrader will use the random price fallback.
+                System.err.println("[AlphaVantageService] In failure cooldown for "
+                        + symbol + " ("
+                        + (FAILURE_COOLDOWN_MS - msSinceFailure) / 1000
+                        + "s remaining). Using simulator fallback.");
+                return PRICE_UNAVAILABLE;
+            }
+            // Cooldown has expired — reset and allow a new attempt
+            lastFailureTime = 0L;
+        }
+        // --- end cooldown check ---
+
         try {
             // Build the request URL
             String url = String.format(BASE_URL, symbol, apiKey);
@@ -82,21 +156,39 @@ public class AlphaVantageService {
 
             if (response.statusCode() != 200) {
                 System.err.println("[AlphaVantageService] HTTP " + response.statusCode()
-                        + " for symbol: " + symbol);
+                        + " for symbol: " + symbol + ". Starting " + FAILURE_COOLDOWN_MS / 1000 + "s cooldown.");
+                lastFailureTime = System.currentTimeMillis(); // activate cooldown
                 return PRICE_UNAVAILABLE;
             }
 
-            return parsePrice(response.body(), symbol);
+            double price = parsePrice(response.body(), symbol);
+
+            if (price == PRICE_UNAVAILABLE) {
+                // parsePrice already printed the reason (rate-limit, bad data, etc.)
+                lastFailureTime = System.currentTimeMillis(); // activate cooldown
+                return PRICE_UNAVAILABLE;
+            }
+
+            // --- Cache store (only on success) ---
+            priceCache.put(symbol, price);
+            cacheFetchTime.put(symbol, System.currentTimeMillis());
+            System.out.println("[AlphaVantageService] Live fetch for " + symbol
+                    + " -> " + price + " (cached for " + CACHE_TTL_MS / 1000 + "s)");
+            return price;
 
         } catch (InterruptedException e) {
             // Restore interrupted status and treat as unavailable
             Thread.currentThread().interrupt();
-            System.err.println("[AlphaVantageService] Request interrupted for: " + symbol);
+            System.err.println("[AlphaVantageService] Request interrupted for: " + symbol
+                    + ". Starting " + FAILURE_COOLDOWN_MS / 1000 + "s cooldown.");
+            lastFailureTime = System.currentTimeMillis(); // activate cooldown
             return PRICE_UNAVAILABLE;
         } catch (Exception e) {
-            // Catches IOException, URISyntaxException, etc.
+            // Catches IOException, URISyntaxException, network errors, etc.
             System.err.println("[AlphaVantageService] Error fetching price for "
-                    + symbol + ": " + e.getMessage());
+                    + symbol + ": " + e.getMessage()
+                    + ". Starting " + FAILURE_COOLDOWN_MS / 1000 + "s cooldown.");
+            lastFailureTime = System.currentTimeMillis(); // activate cooldown
             return PRICE_UNAVAILABLE;
         }
     }

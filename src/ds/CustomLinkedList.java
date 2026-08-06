@@ -20,7 +20,7 @@ public class CustomLinkedList {
         this.size = 0;
     }
 
-    // ----------------------------------------------------------------
+    // --------- -------------------------------------------------------
     //  INSERT AT BEGINNING  (addFirst)
     //  New node becomes the new head.
     //  Before: head --> [B] --> [C] --> null
