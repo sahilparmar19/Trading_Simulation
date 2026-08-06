@@ -30,12 +30,12 @@ public class AuthManager {
             if (Character.isUpperCase(c)) hasUpper = true;
             else if (Character.isLowerCase(c)) hasLower = true;
             else if (Character.isDigit(c))  hasDigit = true;
-            else if (Character.isLetterOrDigit(c))  hasSpecialCharacter = true;
+            else if (!Character.isLetterOrDigit(c)) hasSpecialCharacter = true;
         }
         if (!hasUpper) return "Password must contain at least one uppercase letter.";
         if (!hasLower) return "Password must contain at least one lowercase letter.";
         if (!hasDigit) return "Password must contain at least one digit.";
-        if (!hasSpecialCharacter) return "Password must contain at least one special character digit.";
+        if (!hasSpecialCharacter) return "Password must contain at least one special character (!@#$%^&* etc.).";
         return null; // null = valid
     }
 

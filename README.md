@@ -80,18 +80,19 @@ Before running the application, configure your database connection settings:
 Upon launching, the background Simulation Engine (Matching Engine, Stop-loss Monitor, and Bot Traders) will initialize.
 
 **Default Login Credentials:**
-| Role  | Username  | Password             |
-|-------|-----------|----------------------|
-| Admin | `admin`   | `AdminPassword123`   |
-| User  | `alice`   | `AlicePassword123`   |
-| User  | `bob`     | `BobPassword123`     |
-| User  | `charlie` | `CharliePassword123` |
+| Role  | Username  | Password              |
+|-------|-----------|-----------------------|
+| Admin | `admin`   | `AdminPassword123!`   |
+| User  | `alice`   | `AlicePassword123!`   |
+| User  | `bob`     | `BobPassword123!`     |
+| User  | `charlie` | `CharliePassword123!` |
 
 **Password Rules (Sign Up):**
 - Minimum 8 characters
 - At least one uppercase letter (A–Z)
 - At least one lowercase letter (a–z)
 - At least one digit (0–9)
+- At least one special character (!@#$%^&* etc.)
 
 **Admin Menu:**
 Allows the admin to add new stocks, declare dividends, list IPOs, and view market reports.

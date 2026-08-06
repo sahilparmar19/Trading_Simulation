@@ -421,17 +421,17 @@ INSERT INTO price_history (ticker, price, recorded_at) VALUES
 -- Seed Users
 -- Passwords are stored as plain text (Semester 2 project — no hashing).
 -- Signup validation (enforced in AuthManager.validatePassword):
---   min 8 chars | at least 1 uppercase | 1 lowercase | 1 digit
+--   min 8 chars | 1 uppercase | 1 lowercase | 1 digit | 1 special char
 --
---   admin   / AdminPassword123
---   alice   / AlicePassword123
---   bob     / BobPassword123
---   charlie / CharliePassword123
+--   admin   / AdminPassword123!
+--   alice   / AlicePassword123!
+--   bob     / BobPassword123!
+--   charlie / CharliePassword123!
 INSERT INTO users (username, password_hash, name, balance, is_admin, created_at) VALUES
-('admin',   'AdminPassword123',   'System Administrator', 1000000.00, TRUE,  NOW() - INTERVAL '10 days'),
-('alice',   'AlicePassword123',   'Alice Sharma',          150000.00, FALSE, NOW() - INTERVAL '5 days'),
-('bob',     'BobPassword123',     'Bob Patel',              85000.00, FALSE, NOW() - INTERVAL '4 days'),
-('charlie', 'CharliePassword123', 'Charlie Sen',           200000.00, FALSE, NOW() - INTERVAL '3 days');
+('admin',   'AdminPassword123!',   'System Administrator', 1000000.00, TRUE,  NOW() - INTERVAL '10 days'),
+('alice',   'AlicePassword123!',   'Alice Sharma',          150000.00, FALSE, NOW() - INTERVAL '5 days'),
+('bob',     'BobPassword123!',     'Bob Patel',              85000.00, FALSE, NOW() - INTERVAL '4 days'),
+('charlie', 'CharliePassword123!', 'Charlie Sen',           200000.00, FALSE, NOW() - INTERVAL '3 days');
 
 
 -- Seed Portfolio holdings for users

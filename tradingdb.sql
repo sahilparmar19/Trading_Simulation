@@ -18,17 +18,17 @@
 --    db.password = sahil
 --
 --  Seeded user accounts (username / password):
---    admin   / AdminPassword123
---    alice   / AlicePassword123
---    bob     / BobPassword123
---    charlie / CharliePassword123
+--    admin   / AdminPassword123!
+--    alice   / AlicePassword123!
+--    bob     / BobPassword123!
+--    charlie / CharliePassword123!
 -- ============================================================
 
 -- Use UTC timezone for consistent timestamp behaviour
 SET timezone = 'UTC';
 
 -- Stop on first error so partial imports are caught
-set ON_ERROR_STOP on
+\set ON_ERROR_STOP 1
 
 -- ============================================================
 --  STEP 1: Drop old tables (safe, ordered by FK dependencies)
@@ -177,7 +177,7 @@ CREATE TABLE dividends (
 );
 
 -- Dividend Payments
-CREATE TABLE dividend_payments (
+CREATE TABLE IF NOT EXISTS dividend_payments (
     payment_id  SERIAL PRIMARY KEY,
     dividend_id INT            REFERENCES dividends(dividend_id) ON DELETE CASCADE,
     user_id     INT            REFERENCES users(user_id)         ON DELETE CASCADE,
@@ -250,17 +250,17 @@ INSERT INTO stocks (ticker, company_name, sector_id, current_price, open_price, 
 -- ----- Users -----
 -- Passwords are stored as plain text (Semester 2 project — no hashing).
 -- Signup validation (enforced in AuthManager.validatePassword):
---   min 8 chars | at least 1 uppercase | 1 lowercase | 1 digit
+--   min 8 chars | 1 uppercase | 1 lowercase | 1 digit | 1 special char
 --
---   admin   / AdminPassword123
---   alice   / AlicePassword123
---   bob     / BobPassword123
---   charlie / CharliePassword123
+--   admin   / AdminPassword123!
+--   alice   / AlicePassword123!
+--   bob     / BobPassword123!
+--   charlie / CharliePassword123!
 INSERT INTO users (user_id, username, password_hash, name, balance, is_admin, created_at) VALUES
-(1, 'admin',   'AdminPassword123',   'System Administrator', 1000000.00, TRUE,  NOW() - INTERVAL '10 days'),
-(2, 'alice',   'AlicePassword123',   'Alice Sharma',          150000.00, FALSE, NOW() - INTERVAL '5 days'),
-(3, 'bob',     'BobPassword123',     'Bob Patel',              85000.00, FALSE, NOW() - INTERVAL '4 days'),
-(4, 'charlie', 'CharliePassword123', 'Charlie Sen',           200000.00, FALSE, NOW() - INTERVAL '3 days');
+(1, 'admin',   'AdminPassword123!',   'System Administrator', 1000000.00, TRUE,  NOW() - INTERVAL '10 days'),
+(2, 'alice',   'AlicePassword123!',   'Alice Sharma',          150000.00, FALSE, NOW() - INTERVAL '5 days'),
+(3, 'bob',     'BobPassword123!',     'Bob Patel',              85000.00, FALSE, NOW() - INTERVAL '4 days'),
+(4, 'charlie', 'CharliePassword123!', 'Charlie Sen',           200000.00, FALSE, NOW() - INTERVAL '3 days');
 
 -- Keep sequence in sync with hardcoded IDs
 SELECT setval('users_user_id_seq', 4);

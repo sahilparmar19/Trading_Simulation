@@ -35,10 +35,10 @@ public class BotTrader extends Thread {
 
     private void ensureBotUserRegistered() {
         // Try logging in, if null then sign up
-        model.User user = AuthManager.login(botUsername, "BotPassword123");
+        model.User user = AuthManager.login(botUsername, "BotPassword123!");
         if (user == null) {
-            AuthManager.signUp(botUsername, "BotPassword123", botUsername.toUpperCase());
-            user = AuthManager.login(botUsername, "BotPassword123");
+            AuthManager.signUp(botUsername, "BotPassword123!", botUsername.toUpperCase());
+            user = AuthManager.login(botUsername, "BotPassword123!");
         }
         if (user != null) {
             this.botUserId = user.getUserId();
