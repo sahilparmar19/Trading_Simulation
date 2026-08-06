@@ -9,13 +9,6 @@ public class AuthManager {
 
     /**
      * Simple password hashing using character manipulation.
-     *
-     * Java Concept (Sem 2 - Strings & Loops):
-     *   - Iterates over each character of the password
-     *   - Multiplies a running total by 31 (standard mixing trick)
-     *   - Adds the character's ASCII value and its position
-     *   - Returns the result as a plain number string
-     *
      * Note: This is a simple hash for learning purposes, not for real security.
      */
     public static String hashPassword(String password) {

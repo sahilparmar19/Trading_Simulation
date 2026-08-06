@@ -3,30 +3,9 @@ package ds;
 /**
  * Custom Singly Linked List implementation.
  *
- * DS Concept (Sem 2 - Chapter 4: Linked List):
- *   A Singly Linked List is a linear data structure where each node
- *   points to the next node. Unlike arrays, nodes are NOT stored in
- *   contiguous memory locations.
- *
- *   Structure:
- *     head --> [A|*] --> [B|*] --> [C|null]   (tail = C)
- *
- *   Key operations:
- *     - addFirst  : Insert at beginning  --> O(1)
- *     - addLast   : Insert at end        --> O(1)  (using tail pointer)
- *     - remove    : Delete by value      --> O(n)  (linear search)
- *     - get       : Access by index      --> O(n)  (traversal)
- *     - size      : Count of elements    --> O(1)
- *     - isEmpty   : Check if empty       --> O(1)
- *     - contains  : Search by value      --> O(n)
- *
- *   Note: data is stored as Object type, so when you retrieve an
- *   element you need to cast it to the correct type, e.g.:
- *       Order o = (Order) list.get(0);
- *
- *   Used in this project to store:
- *     - OrderBook registry (all tickers)
- *     - Portfolio holdings, sectors, stocks, pending orders
+ * Used in this project to store:
+ *   - OrderBook registry (all tickers)
+ *   - Portfolio holdings, sectors, stocks, pending orders
  */
 public class CustomLinkedList {
 

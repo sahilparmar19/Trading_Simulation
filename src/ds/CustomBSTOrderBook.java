@@ -5,34 +5,9 @@ import model.Order;
 /**
  * Custom Binary Search Tree (BST) for the Order Book.
  *
- * DS Concept (Sem 2 - Unit 9: Binary Search Tree):
- *   A BST is a tree where for every node:
- *     - All nodes in the LEFT subtree have SMALLER values
- *     - All nodes in the RIGHT subtree have LARGER values
- *
- *   This BST stores Buy/Sell orders sorted by price.
- *
- *   How ordering works in this project:
- *     - BUY  side: Best order = HIGHEST price --> found at rightmost node
- *     - SELL side: Best order = LOWEST  price --> found at leftmost node
- *
- *   When prices are equal, the order placed FIRST (smaller orderId)
- *   gets priority (FIFO - First In, First Out).
- *
- *   Operations:
- *     - insert    : Add a new order           --> O(h)  h = height of tree
- *     - remove    : Delete an existing order  --> O(h)
- *     - peekMin   : View smallest order       --> O(h)  go all the way left
- *     - peekMax   : View largest order        --> O(h)  go all the way right
- *     - pollMin   : Remove and return smallest --> O(h)
- *     - pollMax   : Remove and return largest  --> O(h)
- *
- *   Deletion Cases (standard BST):
- *     Case 1 - Leaf node (no children):  simply remove it
- *     Case 2 - One child:                replace node with its child
- *     Case 3 - Two children:             find in-order successor
- *                                        (smallest in right subtree),
- *                                        copy its data, delete successor
+ * This BST stores Buy/Sell orders sorted by price.
+ * - BUY side: Best order = HIGHEST price (rightmost node)
+ * - SELL side: Best order = LOWEST price (leftmost node)
  */
 public class CustomBSTOrderBook {
 

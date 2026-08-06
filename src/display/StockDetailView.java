@@ -188,7 +188,7 @@ public class StockDetailView {
         }
     }
 
-    // Bubble sort stocks by price (sem 2 DS concept: sorting using array + swap)
+    // Bubble sort stocks by price
     private static void sortStocks(CustomLinkedList list, boolean ascending) {
         int n = list.size();
 
