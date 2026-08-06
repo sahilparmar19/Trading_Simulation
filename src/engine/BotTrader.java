@@ -7,7 +7,6 @@ import model.OrderStatus;
 import model.OrderType;
 import model.Stock;
 import ds.CustomLinkedList;
-import service.AlphaVantageService; // [AlphaVantage] import the new service
 
 import java.sql.Timestamp;
 import java.util.Random;
@@ -18,15 +17,9 @@ public class BotTrader extends Thread {
     private boolean running = true;
     private final Random random = new Random();
 
-    // [AlphaVantage] Shared service instance — created once per BotTrader.
-    // AlphaVantageService is thread-safe; HttpClient is reused across calls.
-    private final AlphaVantageService alphaVantageService;
-
     public BotTrader(String botUsername) {
         this.botUsername = botUsername;
         this.setDaemon(true);
-        // [AlphaVantage] Initialise the service (reads API key from config.properties)
-        this.alphaVantageService = new AlphaVantageService();
     }
 
     public void shutdown() {
@@ -74,22 +67,10 @@ public class BotTrader extends Thread {
                 }
 
                 double currentPrice = stock.getCurrentPrice();
-
-                // [AlphaVantage] Attempt to fetch a live price for this ticker.
-                // getCurrentPrice() returns -1.0 on any failure (network error,
-                // rate limit, parse error) — we check for that and fall back to
-                // the original random ±2% deviation so the bot keeps trading.
-                double livePrice = alphaVantageService.getCurrentPrice(ticker);
-                double price;
-                if (livePrice > 0) {
-                    // Live price obtained — use it directly as the order price
-                    price = livePrice;
-                } else {
-                    // Fallback: original random ±2% deviation around the DB price
-                    double percent = (random.nextDouble() * 4.0) - 2.0; // -2.0% to +2.0%
-                    price = currentPrice * (1.0 + (percent / 100.0));
-                }
-                // Round to 2 decimal places (same as before)
+                // Price deviation of +- 2%
+                double percent = (random.nextDouble() * 4.0) - 2.0; // -2.0% to +2.0%
+                double price = currentPrice * (1.0 + (percent / 100.0));
+                // Round to 2 decimal places
                 price = Math.round(price * 100.0) / 100.0;
 
                 boolean isBuy = random.nextBoolean();
