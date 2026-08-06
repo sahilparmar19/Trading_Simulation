@@ -160,7 +160,7 @@ public class Main {
                 if (success) {
                     System.out.println("Signed up successfully! You can now log in.");
                 } else {
-                    System.out.println("Sign up failed. Username might be taken.");
+                    System.out.println("Sign up failed. Please check the error above and try again.");
                 }
                 break;
             case "3":

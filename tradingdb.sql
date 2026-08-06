@@ -18,17 +18,17 @@
 --    db.password = sahil
 --
 --  Seeded user accounts (username / password):
---    admin   / adminpassword
---    alice   / alicepassword
---    bob     / bobpassword
---    charlie / charliepassword
+--    admin   / AdminPassword123
+--    alice   / AlicePassword123
+--    bob     / BobPassword123
+--    charlie / CharliePassword123
 -- ============================================================
 
 -- Use UTC timezone for consistent timestamp behaviour
 SET timezone = 'UTC';
 
 -- Stop on first error so partial imports are caught
-\set ON_ERROR_STOP on
+set ON_ERROR_STOP on
 
 -- ============================================================
 --  STEP 1: Drop old tables (safe, ordered by FK dependencies)
@@ -84,10 +84,11 @@ CREATE TABLE stocks (
 );
 
 -- Users
+-- NOTE: passwords are stored as plain text for simplicity (Semester 2 project).
 CREATE TABLE users (
     user_id       SERIAL PRIMARY KEY,
     username      VARCHAR(50)   NOT NULL UNIQUE,
-    password_hash VARCHAR(64)   NOT NULL,
+    password_hash VARCHAR(128)  NOT NULL,
     name          VARCHAR(100)  NOT NULL,
     balance       NUMERIC(15,2) NOT NULL DEFAULT 100000.00,
     is_admin      BOOLEAN       NOT NULL DEFAULT FALSE,
@@ -247,21 +248,22 @@ INSERT INTO stocks (ticker, company_name, sector_id, current_price, open_price, 
 ('BIOCON',   'Biocon Limited',                    5,  260.00,  258.00,  257.00,  310000.00, 35.50, 2.40, 0.0700, 0.0300, 1200000, 60.60, 19.40, 20.00, TRUE, 'NSE');
 
 -- ----- Users -----
--- Passwords (Custom hash for the new AuthManager):
---   admin -> 92668751
---   alice -> 92903629
---   bob   -> 97523
---   charlie -> 735284347
---   user -> 8583459338721351917
+-- Passwords are stored as plain text (Semester 2 project — no hashing).
+-- Signup validation (enforced in AuthManager.validatePassword):
+--   min 8 chars | at least 1 uppercase | 1 lowercase | 1 digit
+--
+--   admin   / AdminPassword123
+--   alice   / AlicePassword123
+--   bob     / BobPassword123
+--   charlie / CharliePassword123
 INSERT INTO users (user_id, username, password_hash, name, balance, is_admin, created_at) VALUES
-(1, 'admin',   '92668751', 'System Administrator', 1000000.00, TRUE,  NOW() - INTERVAL '10 days'),
-(2, 'alice',   '92903629', 'Alice Sharma',          150000.00, FALSE, NOW() - INTERVAL '5 days'),
-(3, 'bob',     '97523',    'Bob Patel',              85000.00, FALSE, NOW() - INTERVAL '4 days'),
-(4, 'charlie', '735284347', 'Charlie Sen',           200000.00, FALSE, NOW() - INTERVAL '3 days'),
-(5, 'user',    '8583459338721351917', 'Default User', 500000.00, FALSE, NOW() - INTERVAL '1 day');
+(1, 'admin',   'AdminPassword123',   'System Administrator', 1000000.00, TRUE,  NOW() - INTERVAL '10 days'),
+(2, 'alice',   'AlicePassword123',   'Alice Sharma',          150000.00, FALSE, NOW() - INTERVAL '5 days'),
+(3, 'bob',     'BobPassword123',     'Bob Patel',              85000.00, FALSE, NOW() - INTERVAL '4 days'),
+(4, 'charlie', 'CharliePassword123', 'Charlie Sen',           200000.00, FALSE, NOW() - INTERVAL '3 days');
 
 -- Keep sequence in sync with hardcoded IDs
-SELECT setval('users_user_id_seq', 5);
+SELECT setval('users_user_id_seq', 4);
 
 -- ----- Portfolio -----
 INSERT INTO portfolio (user_id, ticker, quantity, avg_buy_price) VALUES

@@ -13,7 +13,7 @@ A comprehensive, multi-threaded stock market trading simulation built with **Jav
 - **Bot Traders**: Background daemon threads that simulate market activity by actively placing randomized `LIMIT` orders around the current market price.
 - **Advanced Order Types**: Supports `MARKET`, `LIMIT`, and `STOP_LOSS` orders. A dedicated background `StopLossMonitor` thread constantly watches price movements to trigger stop-loss executions.
 - **Corporate Actions**: Admin capabilities to launch **IPOs** (with proportional allotment logic) and declare **Dividends**.
-- **User Authentication**: A lightweight, custom numeric string-hashing system for passwords.
+- **User Authentication**: Plain-text password storage with signup validation (min 8 chars, uppercase, lowercase, digit). Kept simple for Semester 2 scope — no external security libraries.
 - **Reporting System**: Generate and export full transaction history to CSV format.
 
 ---
@@ -80,8 +80,18 @@ Before running the application, configure your database connection settings:
 Upon launching, the background Simulation Engine (Matching Engine, Stop-loss Monitor, and Bot Traders) will initialize.
 
 **Default Login Credentials:**
-- **Admin:** Username: `admin` | Password: `admin`
-- **Users:** Username: `alice`, `bob` | Password: `alice`, `bob` (or create a new user via the Sign Up menu)
+| Role  | Username  | Password             |
+|-------|-----------|----------------------|
+| Admin | `admin`   | `AdminPassword123`   |
+| User  | `alice`   | `AlicePassword123`   |
+| User  | `bob`     | `BobPassword123`     |
+| User  | `charlie` | `CharliePassword123` |
+
+**Password Rules (Sign Up):**
+- Minimum 8 characters
+- At least one uppercase letter (A–Z)
+- At least one lowercase letter (a–z)
+- At least one digit (0–9)
 
 **Admin Menu:**
 Allows the admin to add new stocks, declare dividends, list IPOs, and view market reports.
