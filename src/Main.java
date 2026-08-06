@@ -2,6 +2,7 @@ import admin.AdminPanel;
 import auth.AuthManager;
 import auth.Session;
 import db.DatabaseManager;
+import db.MarketInitializationService;
 import display.MarketDisplay;
 import display.PortfolioView;
 import display.StockDetailView;
@@ -31,6 +32,10 @@ public class Main {
         System.out.println("=================================================");
         System.out.println("               TRADING SIMULATION ENGINE");
         System.out.println("=================================================");
+
+        // 0. Seed initial market prices from Alpha Vantage (startup only).
+        //    After this returns, MatchingEngine is the sole price authority.
+        MarketInitializationService.initialize();
 
         // 1. Load pending orders from database into in-memory BSTs
         loadPendingOrders();
@@ -428,7 +433,8 @@ public class Main {
             }
         } else if (typeChoice.equals("2")) {
             type = OrderType.MARKET;
-            // Set price parameter based on Buy/Sell to match top of opposite book
+
+            // Market orders use sentinel prices for matching priority
             price = isBuy ? 9999999.99 : 0.0;
         } else {
             System.out.println("Invalid option.");

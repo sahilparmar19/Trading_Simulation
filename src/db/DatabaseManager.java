@@ -721,4 +721,86 @@ public class DatabaseManager {
             if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
         }
     }
+
+    // ---------------------------------------------------------------------------
+    // Market Initialization (Alpha Vantage startup seeding) -- DO NOT USE AT RUNTIME
+    // ---------------------------------------------------------------------------
+
+    /**
+     * Returns an array of ticker symbols for all currently listed stocks.
+     * Used exclusively by MarketInitializationService during startup.
+     *
+     * @return String[] of ticker symbols, never null (empty array on failure).
+     */
+    public static String[] getAllListedTickers() {
+        String sql = "SELECT ticker FROM stocks WHERE is_listed = TRUE ORDER BY ticker ASC";
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        // Use a resizable list before converting to array
+        java.util.List<String> tickers = new java.util.ArrayList<>();
+        try {
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                tickers.add(rs.getString("ticker"));
+            }
+        } catch (SQLException e) {
+            System.err.println("[DatabaseManager] Error fetching listed tickers: " + e.getMessage());
+        } finally {
+            if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("Error closing ResultSet: " + e.getMessage()); } }
+            if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+        }
+        return tickers.toArray(new String[0]);
+    }
+
+    /**
+     * Updates current_price, open_price, and prev_close for a stock during startup
+     * market initialization.
+     *
+     * IMPORTANT INVARIANTS:
+     *   - Called ONLY by MarketInitializationService.initialize() before the simulation starts.
+     *   - Never called at runtime.
+     *
+     * SIDE EFFECT — price_history (via PostgreSQL trigger):
+     *   This method does not explicitly INSERT into price_history.
+     *   However, the pre-existing database trigger trg_record_price_history fires
+     *   automatically AFTER UPDATE OF current_price ON stocks (see schema.sql lines 527–543).
+     *   If the new current_price differs from the old value, the trigger records it
+     *   in price_history. This is expected and acceptable: the Alpha Vantage seed price
+     *   becomes the first entry in the price chart, providing a realistic starting point.
+     *   MatchingEngine remains the sole authority for all subsequent price_history entries
+     *   after initialization completes.
+     *
+     * @param ticker The stock ticker symbol.
+     * @param price  The real-time price fetched from Alpha Vantage (must be > 0).
+     * @return true if the UPDATE affected at least one row, false on any error.
+     */
+    public static boolean initializeStockPrice(String ticker, double price) {
+        // Update current_price, open_price, and prev_close with the API seed value.
+        // Note: updating current_price causes the trg_record_price_history trigger to
+        // fire automatically, inserting a row into price_history if the price changed.
+        // This is intentional — see the Javadoc above.
+        String sql = "UPDATE stocks SET current_price = ?, open_price = ?, prev_close = ? WHERE ticker = ?";
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
+            pstmt.setDouble(1, price);   // current_price
+            pstmt.setDouble(2, price);   // open_price  (API price becomes today's open)
+            pstmt.setDouble(3, price);   // prev_close  (same — no yesterday data from free API)
+            pstmt.setString(4, ticker);
+            int rows = pstmt.executeUpdate();
+            return rows > 0;
+        } catch (SQLException e) {
+            System.err.println("[DatabaseManager] Error initializing stock price for " + ticker + ": " + e.getMessage());
+            return false;
+        } finally {
+            if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("Error closing PreparedStatement: " + e.getMessage()); } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { System.err.println("Error closing Connection: " + e.getMessage()); } }
+        }
+    }
 }
