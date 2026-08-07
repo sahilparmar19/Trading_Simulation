@@ -1,2 +1,21 @@
-# Project exclude paths
-/out/
+# Compiled Java classes
+bin/
+out/
+*.class
+
+# IntelliJ files
+.idea/
+*.iml
+
+# Runtime logs
+logs/
+
+# Generated reports
+reports/
+
+# Temporary files
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
