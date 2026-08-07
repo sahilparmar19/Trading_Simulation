@@ -18,21 +18,21 @@ public class MarketInitializationService {
     private static final long REQUEST_DELAY_MS = 1500;
 
     private static final StockMapping[] SEEDED_TICKERS = {
-            new StockMapping("RELIANCE", "RELIANCE.BSE"),
-            new StockMapping("TCS", "TCS.BSE"),
-            new StockMapping("INFY", "INFY.BSE"),
-            new StockMapping("HDFCBANK", "HDFCBANK.BSE"),
-            new StockMapping("ICICIBANK", "ICICIBANK.BSE"),
-            new StockMapping("SBIN", "SBIN.BSE"),
-            new StockMapping("LT", "LT.BSE"),
-            new StockMapping("ITC", "ITC.BSE"),
-            new StockMapping("BHARTIARTL", "BHARTIARTL.BSE"),
-            new StockMapping("ONGC", "ONGC.BSE")
+            new StockMapping("RELIANCE", "RELIANCE.NS"),
+            new StockMapping("TCS", "TCS.NS"),
+            new StockMapping("INFY", "INFY.NS"),
+            new StockMapping("HDFCBANK", "HDFCBANK.NS"),
+            new StockMapping("ICICIBANK", "ICICIBANK.NS"),
+            new StockMapping("SBIN", "SBIN.NS"),
+            new StockMapping("WIPRO", "WIPRO.NS"),
+            new StockMapping("TECHM", "TECHM.NS"),
+            new StockMapping("NTPC", "NTPC.NS"),
+            new StockMapping("ONGC", "ONGC.NS")
     };
 
     public static void initialize() {
 
-        System.out.println("[MarketInitialization] Starting Alpha Vantage market price initialization...");
+        System.out.println("[MarketInitialization] Starting Yahoo Finance market price initialization...");
 
         System.out.println("[MarketInitialization] Initializing prices for "
                 + SEEDED_TICKERS.length + " stock(s).");
@@ -43,7 +43,7 @@ public class MarketInitializationService {
         for (StockMapping stock : SEEDED_TICKERS) {
 
             OptionalDouble priceOpt =
-                    AlphaVantageService.getCurrentPrice(stock.apiTicker);
+                    YahooFinanceService.getCurrentPrice(stock.apiTicker);
 
             if (priceOpt.isPresent()) {
 

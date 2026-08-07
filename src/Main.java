@@ -33,7 +33,7 @@ public class Main {
         System.out.println("               TRADING SIMULATION ENGINE");
         System.out.println("=================================================");
 
-        // 0. Seed initial market prices from Alpha Vantage (startup only).
+        // 0. Seed initial market prices from Yahoo Finance (startup only).
         //    After this returns, MatchingEngine is the sole price authority.
         MarketInitializationService.initialize();
 
