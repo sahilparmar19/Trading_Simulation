@@ -122,7 +122,7 @@ public class StopLossMonitor extends Thread {
                 synchronized (book) {
                     book.getSellSide().insert(marketOrder);
                 }
-                System.out.println("\n[SYSTEM] Stop-loss triggered for " + ticker + " (Stop Price: ₹" + stopPrice + "). Placed Market Sell Order ID " + orderId);
+                System.out.println("\n[SYSTEM] Stop-loss triggered for " + ticker + " (Stop Price: INR " + stopPrice + "). Placed Market Sell Order ID " + orderId);
             }
         } catch (SQLException e) {
             System.err.println("Error triggering stop loss: " + e.getMessage());

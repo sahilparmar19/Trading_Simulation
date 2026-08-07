@@ -20,7 +20,7 @@ public class StockDetailView {
             System.out.println("\n=================================================================");
             System.out.printf(" %s (%s) [%s]%n", stock.getCompanyName().toUpperCase(), stock.getTicker(), stock.getExchange());
             System.out.println("=================================================================");
-            System.out.printf(" Price:        ₹%-12.2f | Market Cap:  ₹%.2f Cr%n", stock.getCurrentPrice(), stock.getMarketCap() / 10000000.0);
+            System.out.printf(" Price:        INR %-10.2f | Market Cap:  INR %.2f Cr%n", stock.getCurrentPrice(), stock.getMarketCap() / 10000000.0);
             System.out.printf(" PE Ratio:     %-12.2f | P/B Ratio:   %-12.2f%n", stock.getPeRatio(), stock.getPbRatio());
             System.out.printf(" ROE:          %-11.2f%% | ROA:         %-11.2f%%%n", stock.getRoe() * 100.0, stock.getRoa() * 100.0);
             System.out.println("-----------------------------------------------------------------");
@@ -81,7 +81,7 @@ public class StockDetailView {
             
             // Prevent console spam if there are thousands of bot trades
             if (size <= 15 || i < 5 || i >= size - 5) {
-                System.out.printf("  [%s] ₹%.2f%n", record.getRecordedAt().toString(), price);
+                System.out.printf("  [%s] INR %.2f%n", record.getRecordedAt().toString(), price);
             } else if (i == 5) {
                 System.out.printf("  ... [%d more records hidden] ...%n", size - 10);
             }
@@ -97,8 +97,8 @@ public class StockDetailView {
         }
 
         System.out.println("-------------------------");
-        System.out.printf(" Min Price:  ₹%.2f%n", min);
-        System.out.printf(" Max Price:  ₹%.2f%n", max);
+        System.out.printf(" Min Price:  INR %.2f%n", min);
+        System.out.printf(" Max Price:  INR %.2f%n", max);
         System.out.printf(" Performance: %+.2f%% (%s)%n", diffPct, trend);
         System.out.println("-------------------------");
     }
@@ -159,7 +159,7 @@ public class StockDetailView {
                     if (s.getPrevClose() > 0) {
                         change = ((s.getCurrentPrice() - s.getPrevClose()) / s.getPrevClose()) * 100.0;
                     }
-                    System.out.printf(" [%-3d] | %-10s | %-32s | ₹%-13.2f | %+.2f%%%n",
+                    System.out.printf(" [%-3d] | %-10s | %-32s | INR %-11.2f | %+.2f%%%n",
                             i + 1, s.getTicker(), s.getCompanyName(), s.getCurrentPrice(), change);
                 }
                 System.out.printf(" [%d] Go Back%n", stocks.size() + 1);

@@ -29,7 +29,7 @@ public class IOManager {
         try {
             fw = new FileWriter(logPath, true);
             pw = new PrintWriter(fw);
-            pw.printf("[%s] TRADE MATCHED: Ticker: %s | Buy Order: %d | Sell Order: %d | Price: ₹%.2f | Qty: %d | Total: ₹%.2f%n",
+            pw.printf("[%s] TRADE MATCHED: Ticker: %s | Buy Order: %d | Sell Order: %d | Price: INR %.2f | Qty: %d | Total: INR %.2f%n",
                     timestamp, trade.getTicker(), trade.getBuyOrderId(), trade.getSellOrderId(),
                     trade.getExecutedPrice(), trade.getQuantity(), (trade.getExecutedPrice() * trade.getQuantity()));
         } catch (IOException e) {
@@ -50,7 +50,7 @@ public class IOManager {
         try {
             fw = new FileWriter(logPath, true);
             pw = new PrintWriter(fw);
-            pw.printf("[%s] STOP LOSS TRIGGERED: Ticker: %s | User ID: %d | SL Order: %d | Stop Price: ₹%.2f | Qty: %d%n",
+            pw.printf("[%s] STOP LOSS TRIGGERED: Ticker: %s | User ID: %d | SL Order: %d | Stop Price: INR %.2f | Qty: %d%n",
                     timestamp, sl.getTicker(), sl.getUserId(), sl.getSlId(),
                     sl.getStopPrice(), sl.getQuantity());
         } catch (IOException e) {

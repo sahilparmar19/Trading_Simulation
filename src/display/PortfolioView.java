@@ -21,7 +21,7 @@ public class PortfolioView {
 
         System.out.println("\n=========================================================================");
         System.out.printf(" PORTFOLIO VIEW - User: %s%n", Session.getCurrentUser().getName());
-        System.out.printf(" Available Balance: ₹%.2f%n", balance);
+        System.out.printf(" Available Balance: INR %.2f%n", balance);
         System.out.println("=========================================================================");
 
         if (holdings.size() == 0) {
@@ -41,7 +41,7 @@ public class PortfolioView {
                 totalCurrentVal += holding.currentPrice * holding.quantity;
                 totalPnL += holding.getPnL();
 
-                System.out.printf("%-12s | %-28s | %-8d | ₹%-11.2f | ₹%-11.2f | %+-11.2f | %+-9.2f%%%n",
+                System.out.printf("%-12s | %-28s | %-8d | INR %-9.2f | INR %-9.2f | %+-11.2f | %+-9.2f%%%n",
                         holding.ticker, holding.companyName, holding.quantity,
                         holding.avgBuyPrice, holding.currentPrice,
                         holding.getPnL(), holding.getPnLPct());
@@ -49,8 +49,8 @@ public class PortfolioView {
 
             double totalPnLPct = totalCostVal == 0 ? 0 : (totalPnL / totalCostVal) * 100.0;
             System.out.println("---------------------------------------------------------------------------------------------------------");
-            System.out.printf(" Total Portfolio Cost Value:    ₹%.2f%n", totalCostVal);
-            System.out.printf(" Total Portfolio Current Value: ₹%.2f%n", totalCurrentVal);
+            System.out.printf(" Total Portfolio Cost Value:    INR %.2f%n", totalCostVal);
+            System.out.printf(" Total Portfolio Current Value: INR %.2f%n", totalCurrentVal);
             System.out.printf(" Total Aggregate P&L:           %+.2f (%+.2f%%)%n", totalPnL, totalPnLPct);
             System.out.println("=========================================================================");
         }

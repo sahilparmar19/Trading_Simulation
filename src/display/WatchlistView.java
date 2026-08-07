@@ -36,7 +36,7 @@ public class WatchlistView {
                 System.out.println("-----------------------------------------------------------------");
                 for (int i = 0; i < watchlist.size(); i++) {
                     Stock stock = (Stock) watchlist.get(i);
-                    System.out.printf("%-10s | %-32s | ₹%-12.2f%n",
+                    System.out.printf("%-10s | %-32s | INR %-10.2f%n",
                             stock.getTicker(), stock.getCompanyName(), stock.getCurrentPrice());
                 }
                 System.out.println("=================================================================");

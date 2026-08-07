@@ -339,7 +339,7 @@ public class Main {
             if (s.getPrevClose() > 0) {
                 change = ((s.getCurrentPrice() - s.getPrevClose()) / s.getPrevClose()) * 100.0;
             }
-            System.out.printf(" [%-3d] | %-10s | %-32s | â‚¹%-13.2f | %+.2f%%%n",
+            System.out.printf(" [%-3d] | %-10s | %-32s | INR %-9.2f | %+.2f%%%n",
                     i + 1, s.getTicker(), s.getCompanyName(), s.getCurrentPrice(), change);
         }
         System.out.printf(" [%d] Go Back%n", stocks.size() + 1);
@@ -421,7 +421,7 @@ public class Main {
         if (typeChoice.equals("1")) {
             type = OrderType.LIMIT;
             // Show current market price before asking for limit price
-            System.out.printf(" Current Market Price: â‚¹%.2f%n", stock.getCurrentPrice());
+            System.out.printf(" Current Market Price: INR %.2f%n", stock.getCurrentPrice());
             System.out.print(" Enter Limit Price (INR): ");
             try {
                 price = Double.parseDouble(sc.nextLine().trim());
@@ -506,13 +506,13 @@ public class Main {
             return;
         }
 
-        System.out.printf(" Current Market Price: â‚¹%.2f%n", stock.getCurrentPrice());
+        System.out.printf(" Current Market Price: INR %.2f%n", stock.getCurrentPrice());
         System.out.print(" Enter Stop-Loss Trigger Price (INR): ");
         double stopPrice;
         try {
             stopPrice = Double.parseDouble(sc.nextLine().trim());
             if (stopPrice <= 0 || stopPrice >= stock.getCurrentPrice()) {
-                System.out.println("Stop price must be positive and less than current market price (â‚¹"
+                System.out.println("Stop price must be positive and less than current market price (INR "
                         + stock.getCurrentPrice() + ").");
                 return;
             }
@@ -530,7 +530,7 @@ public class Main {
             pstmt.setDouble(4, stopPrice);
             pstmt.setString(5, model.StopLossStatus.ACTIVE.name());
             pstmt.executeUpdate();
-            System.out.println("Stop-loss order set successfully at â‚¹" + stopPrice);
+            System.out.println("Stop-loss order set successfully at INR " + stopPrice);
         } catch (SQLException e) {
             System.err.println("Error setting stop-loss: " + e.getMessage());
         }
@@ -553,7 +553,7 @@ public class Main {
             Order o = (Order) orders.get(i);
             String side = o.isBuy() ? "BUY" : "SELL";
             Stock stock = DatabaseManager.getStock(o.getTicker());
-            System.out.printf(" %-10d | %-10s | %-8s | â‚¹%-13.2f | %-10d | %s%n",
+            System.out.printf(" %-10d | %-10s | %-8s | INR %-9.2f | %-10d | %s%n",
                     o.getOrderId(), o.getTicker(), side, o.getPrice(), o.getQuantity(),
                     o.getTimestamp().toString());
         }
@@ -568,7 +568,7 @@ public class Main {
                         ? stock.getCurrentPrice() - o.getPrice()
                         : o.getPrice() - stock.getCurrentPrice();
                 String status = diff > 0 ? "(Above limit)" : diff < 0 ? "(Below limit)" : "(At limit)";
-                System.out.printf("   %s: â‚¹%.2f %s%n", o.getTicker(), stock.getCurrentPrice(), status);
+                System.out.printf("   %s: INR %.2f %s%n", o.getTicker(), stock.getCurrentPrice(), status);
             }
         }
     }

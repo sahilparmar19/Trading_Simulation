@@ -177,7 +177,7 @@ public class MarketDisplay {
                         change = ((stock.getCurrentPrice() - stock.getPrevClose()) / stock.getPrevClose()) * 100.0;
                     }
                     String arrow = change >= 0 ? "▲" : "▼";
-                    System.out.printf("%-12s | %-32s | ₹%-13.2f | ₹%-11.2f | %s %+.2f%%%n",
+                    System.out.printf("%-12s | %-32s | INR %-11.2f | INR %-9.2f | %s %+.2f%%%n",
                             stock.getTicker(), stock.getCompanyName(),
                             stock.getCurrentPrice(), stock.getPrevClose(),
                             arrow, change);
@@ -214,7 +214,7 @@ public class MarketDisplay {
             if (stock.getPrevClose() > 0) {
                 change = ((stock.getCurrentPrice() - stock.getPrevClose()) / stock.getPrevClose()) * 100.0;
             }
-            System.out.printf("%-12s | %-32s | ₹%-11.2f | ₹%-11.2f | %+.2f%%%n",
+            System.out.printf("%-12s | %-32s | INR %-11.2f | INR %-11.2f | %+.2f%%%n",
                     stock.getTicker(), stock.getCompanyName(),
                     stock.getCurrentPrice(), stock.getPrevClose(), change);
         }

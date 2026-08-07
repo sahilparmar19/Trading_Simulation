@@ -256,7 +256,7 @@ public class AdminPanel {
             System.out.printf("%-8s | %-12s | %-20s | %-12s | %-8s%n", "User ID", "Username", "Name", "Balance (INR)", "Admin?");
             System.out.println("---------------------------------------------------------------------------------");
             while (rs.next()) {
-                System.out.printf("%-8d | %-12s | %-20s | ₹%-11.2f | %-8b%n",
+                System.out.printf("%-8d | %-12s | %-20s | INR %-11.2f | %-8b%n",
                         rs.getInt("user_id"),
                         rs.getString("username"),
                         rs.getString("name"),
