@@ -472,4 +472,98 @@ public class IPOManager {
         }
         return null;
     }
+
+    public static class IPOApplicationInfo {
+        public final int appId;
+        public final int ipoId;
+        public final String ticker;
+        public final String companyName;
+        public final double ipoPrice;
+        public final int appliedQty;
+        public final int allottedQty;
+        public final String status;
+        
+        public IPOApplicationInfo(int appId, int ipoId, String ticker, String companyName, double ipoPrice, int appliedQty, int allottedQty, String status) {
+            this.appId = appId;
+            this.ipoId = ipoId;
+            this.ticker = ticker;
+            this.companyName = companyName;
+            this.ipoPrice = ipoPrice;
+            this.appliedQty = appliedQty;
+            this.allottedQty = allottedQty;
+            this.status = status;
+        }
+    }
+
+    public static ds.CustomLinkedList getOpenIPOs() {
+        ds.CustomLinkedList openIpos = new ds.CustomLinkedList();
+        String sql = "SELECT * FROM ipos WHERE status = ?";
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DatabaseManager.getConnection();
+            pstmt = con.prepareStatement(sql);
+            pstmt.setString(1, IPOStatus.OPEN.name());
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                openIpos.addLast(new IPO(
+                    rs.getInt("ipo_id"),
+                    rs.getString("ticker"),
+                    rs.getString("company_name"),
+                    rs.getInt("sector_id"),
+                    rs.getDouble("ipo_price"),
+                    rs.getLong("total_shares"),
+                    rs.getLong("shares_remaining"),
+                    rs.getTimestamp("open_time"),
+                    rs.getTimestamp("close_time"),
+                    IPOStatus.valueOf(rs.getString("status"))
+                ));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching open IPOs: " + e.getMessage());
+        } finally {
+            if (rs != null) { try { rs.close(); } catch (SQLException e) { } }
+            if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { } }
+        }
+        return openIpos;
+    }
+
+    public static ds.CustomLinkedList getUserIPOApplications(int userId) {
+        ds.CustomLinkedList apps = new ds.CustomLinkedList();
+        String sql = "SELECT a.app_id, a.ipo_id, i.ticker, i.company_name, i.ipo_price, a.applied_qty, a.allotted_qty, i.status " +
+                     "FROM ipo_applications a " +
+                     "JOIN ipos i ON a.ipo_id = i.ipo_id " +
+                     "WHERE a.user_id = ? " +
+                     "ORDER BY a.app_id DESC";
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DatabaseManager.getConnection();
+            pstmt = con.prepareStatement(sql);
+            pstmt.setInt(1, userId);
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                apps.addLast(new IPOApplicationInfo(
+                    rs.getInt("app_id"),
+                    rs.getInt("ipo_id"),
+                    rs.getString("ticker"),
+                    rs.getString("company_name"),
+                    rs.getDouble("ipo_price"),
+                    rs.getInt("applied_qty"),
+                    rs.getInt("allotted_qty"),
+                    rs.getString("status")
+                ));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching user IPO applications: " + e.getMessage());
+        } finally {
+            if (rs != null) { try { rs.close(); } catch (SQLException e) { } }
+            if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { } }
+            if (con != null) { try { con.close(); } catch (SQLException e) { } }
+        }
+        return apps;
+    }
 }

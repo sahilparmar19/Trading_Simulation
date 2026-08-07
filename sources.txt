@@ -2,9 +2,11 @@ C:\Trading_Simulation\src\Main.java
 C:\Trading_Simulation\src\admin\AdminPanel.java
 C:\Trading_Simulation\src\auth\AuthManager.java
 C:\Trading_Simulation\src\auth\Session.java
+C:\Trading_Simulation\src\db\AlphaVantageService.java
 C:\Trading_Simulation\src\db\DatabaseManager.java
 C:\Trading_Simulation\src\db\DividendManager.java
 C:\Trading_Simulation\src\db\IPOManager.java
+C:\Trading_Simulation\src\db\MarketInitializationService.java
 C:\Trading_Simulation\src\db\TradeTransaction.java
 C:\Trading_Simulation\src\display\MarketDisplay.java
 C:\Trading_Simulation\src\display\PortfolioView.java

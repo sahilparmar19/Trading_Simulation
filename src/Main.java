@@ -3,6 +3,7 @@ import auth.AuthManager;
 import auth.Session;
 import db.DatabaseManager;
 import db.MarketInitializationService;
+import display.IPOView;
 import display.MarketDisplay;
 import display.PortfolioView;
 import display.StockDetailView;
@@ -200,7 +201,8 @@ public class Main {
         System.out.println(" [8] Export Transaction & Portfolio Report");
         System.out.println(" [9] View Live Stock Prices");
         System.out.println("[10] View Limit Orders");
-        System.out.println("[11] Log Out");
+        System.out.println("[11] IPO Center");
+        System.out.println("[12] Log Out");
         System.out.print(" Choose option: ");
         String choice = sc.nextLine().trim();
 
@@ -247,6 +249,9 @@ public class Main {
                 viewLimitOrders();
                 break;
             case "11":
+                IPOView.render(sc);
+                break;
+            case "12":
                 Session.logout();
                 System.out.println("Logged out successfully.");
                 break;
@@ -365,11 +370,57 @@ public class Main {
         return (Stock) stocks.get(stockIndex - 1);
     }
 
+    private static Stock selectOwnedStock(Scanner sc) {
+        User user = Session.getCurrentUser();
+        CustomLinkedList portfolio = DatabaseManager.getPortfolio(user.getUserId());
+        
+        if (portfolio.size() == 0) {
+            System.out.println(" You do not hold any stocks.");
+            return null;
+        }
+        
+        System.out.println("\n--- Your Owned Stocks ---");
+        System.out.printf(" %-5s | %-12s | %-30s | %-8s | %-15s%n", "No.", "Ticker", "Company Name", "Qty", "Avg Buy Price");
+        System.out.println(" ----------------------------------------------------------------------------------");
+        for (int i = 0; i < portfolio.size(); i++) {
+            DatabaseManager.PortfolioHolding holding = (DatabaseManager.PortfolioHolding) portfolio.get(i);
+            System.out.printf(" [%-3d] | %-12s | %-30s | %-8d | ₹%-14.2f%n", 
+                (i + 1), holding.ticker, holding.companyName, holding.quantity, holding.avgBuyPrice);
+        }
+        System.out.printf(" [%d] Go Back%n", portfolio.size() + 1);
+        System.out.print(" Select stock: ");
+        String choice = sc.nextLine().trim();
+        
+        int idx;
+        try {
+            idx = Integer.parseInt(choice);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input.");
+            return null;
+        }
+        
+        if (idx == portfolio.size() + 1) {
+            return null;
+        }
+        if (idx < 1 || idx > portfolio.size()) {
+            System.out.println("Invalid selection.");
+            return null;
+        }
+        
+        DatabaseManager.PortfolioHolding selected = (DatabaseManager.PortfolioHolding) portfolio.get(idx - 1);
+        return DatabaseManager.getStock(selected.ticker);
+    }
+
     private static void placeOrderFlow(boolean isBuy, Scanner sc) {
         System.out.println(isBuy ? "\n--- PLACE BUY ORDER ---" : "\n--- PLACE SELL ORDER ---");
 
-        // Sector â†’ Stock selection
-        Stock stock = selectStockFromSectors(sc);
+        Stock stock = null;
+        if (isBuy) {
+            stock = selectStockFromSectors(sc);
+        } else {
+            stock = selectOwnedStock(sc);
+        }
+        
         if (stock == null) {
             return;
         }
@@ -472,13 +523,12 @@ public class Main {
     private static void placeStopLossFlow(Scanner sc) {
         int userId = Session.getCurrentUser().getUserId();
         System.out.println("\n--- SET STOP-LOSS ORDER ---");
-        System.out.print(" Enter Stock Ticker: ");
-        String ticker = sc.nextLine().trim().toUpperCase();
-        Stock stock = DatabaseManager.getStock(ticker);
+        
+        Stock stock = selectOwnedStock(sc);
         if (stock == null) {
-            System.out.println("Stock not found.");
             return;
         }
+        String ticker = stock.getTicker();
        // Check if user owns the stock
         CustomLinkedList portfolio = DatabaseManager.getPortfolio(userId);
         int ownedQty = 0;
