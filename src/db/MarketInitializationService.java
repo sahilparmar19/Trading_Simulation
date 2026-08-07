@@ -14,8 +14,6 @@ public class MarketInitializationService {
         }
     }
 
-    // 1.5 second delay between API requests (for testing)
-    private static final long REQUEST_DELAY_MS = 1500;
 
     private static final StockMapping[] SEEDED_TICKERS = {
             new StockMapping("RELIANCE", "RELIANCE.NS"),
@@ -79,16 +77,6 @@ public class MarketInitializationService {
                                 + stock.dbTicker
                                 + ". Using existing database value.");
 
-                failureCount++;
-            }
-
-            // Wait 1.5 seconds before the next API request
-            try {
-                Thread.sleep(REQUEST_DELAY_MS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                System.err.println("[MarketInitialization] Initialization interrupted.");
-                break;
             }
         }
 

@@ -578,12 +578,22 @@ EXECUTE FUNCTION log_price_change();
 CREATE OR REPLACE FUNCTION check_order_balance()
 RETURNS TRIGGER AS $$
 DECLARE
-    v_balance NUMERIC(15, 2);
-    v_cost    NUMERIC(15, 2);
+    v_balance      NUMERIC(15, 2);
+    v_market_price NUMERIC(15, 2);
+    v_cost         NUMERIC(15, 2);
 BEGIN
     IF NEW.is_buy = TRUE THEN
         SELECT balance INTO v_balance FROM users WHERE user_id = NEW.user_id;
-        v_cost := NEW.price * NEW.quantity;
+
+        IF NEW.order_type = 'LIMIT' THEN
+            v_cost := NEW.price * NEW.quantity;
+        ELSIF NEW.order_type = 'MARKET' THEN
+            SELECT current_price INTO v_market_price FROM stocks WHERE ticker = NEW.ticker;
+            v_cost := v_market_price * NEW.quantity;
+        ELSE
+            v_cost := NEW.price * NEW.quantity;
+        END IF;
+
         IF v_balance < v_cost THEN
             RAISE EXCEPTION 'Insufficient balance to place buy order. Required: %, Available: %', v_cost, v_balance;
         END IF;
