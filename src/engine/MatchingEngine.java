@@ -51,10 +51,27 @@ public class MatchingEngine extends Thread {
 
                 if (buyOrder.getPrice() >= sellOrder.getPrice()) {
                     int qtyToMatch = Math.min(buyOrder.getQuantity(), sellOrder.getQuantity());
-                    // Execute at the price of the order that was placed first
-                    double executedPrice = (buyOrder.getOrderId() < sellOrder.getOrderId()) 
-                                            ? buyOrder.getPrice() 
-                                            : sellOrder.getPrice();
+                    // Determine executed price safely (avoiding MARKET order sentinel prices 9999999.99 and 0.0)
+                    boolean isBuyMarket = buyOrder.getOrderType() == model.OrderType.MARKET || buyOrder.getPrice() >= 9999999.0;
+                    boolean isSellMarket = sellOrder.getOrderType() == model.OrderType.MARKET || sellOrder.getPrice() <= 0.0;
+
+                    double executedPrice;
+                    if (isBuyMarket && !isSellMarket) {
+                        // MARKET BUY + LIMIT SELL: Execute at LIMIT SELL price
+                        executedPrice = sellOrder.getPrice();
+                    } else if (!isBuyMarket && isSellMarket) {
+                        // LIMIT BUY + MARKET SELL: Execute at LIMIT BUY price
+                        executedPrice = buyOrder.getPrice();
+                    } else if (isBuyMarket && isSellMarket) {
+                        // MARKET BUY + MARKET SELL: Execute at stock's current market price
+                        model.Stock stock = DatabaseManager.getStock(book.getTicker());
+                        executedPrice = (stock != null) ? stock.getCurrentPrice() : 100.0;
+                    } else {
+                        // LIMIT BUY + LIMIT SELL: Execute at the price of the order that was placed first
+                        executedPrice = (buyOrder.getOrderId() < sellOrder.getOrderId()) 
+                                                ? buyOrder.getPrice() 
+                                                : sellOrder.getPrice();
+                    }
 
                     boolean success = TradeTransaction.execute(buyOrder, sellOrder, executedPrice, qtyToMatch);
                     if (success) {

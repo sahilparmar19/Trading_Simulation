@@ -506,6 +506,7 @@ public class Main {
 
         int id = DatabaseManager.insertOrder(order);
         if (id != -1) {
+            order.setOrderId(id);
             OrderBook book = OrderBook.get(ticker);
             synchronized (book) {
                 if (isBuy) {

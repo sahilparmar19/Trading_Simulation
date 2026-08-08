@@ -176,6 +176,7 @@ public class WatchlistView {
 
         int orderId = DatabaseManager.insertOrder(order);
         if (orderId != -1) {
+            order.setOrderId(orderId);
             OrderBook book = OrderBook.get(stock.getTicker());
             synchronized (book) {
                 if (isBuy) {

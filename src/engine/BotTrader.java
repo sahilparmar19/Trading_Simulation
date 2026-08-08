@@ -102,6 +102,7 @@ public class BotTrader extends Thread {
                 // Insert into DB to get order ID
                 int orderId = DatabaseManager.insertOrder(order);
                 if (orderId != -1) {
+                    order.setOrderId(orderId);
                     // Put in local OrderBook BST
                     OrderBook book = OrderBook.get(ticker);
                     synchronized (book) {
