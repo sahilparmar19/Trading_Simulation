@@ -41,6 +41,7 @@ public class Main {
         // 1. Load pending orders from database into in-memory BSTs
         loadPendingOrders();
 
+
         // 2. Start core trading engine background threads
         System.out.println("Initializing background threads...");
 
@@ -143,7 +144,8 @@ public class Main {
 
         switch (choice) {
             case "1":
-                System.out.print(" Username: ");
+                System.out.
+                        print(" Username: ");
                 String user = sc.nextLine().trim();
                 System.out.print(" Password: ");
                 String pass = sc.nextLine().trim();
@@ -158,6 +160,7 @@ public class Main {
             case "2":
                 System.out.print(" Choose Username: ");
                 String regUser = sc.nextLine().trim();
+                System.out.println(" (Note: Password should contain at least one uppercase letter, one lowercase letter, one digit, and one special character.)");
                 System.out.print(" Choose Password: ");
                 String regPass = sc.nextLine().trim();
                 System.out.print(" Enter Full Name: ");
