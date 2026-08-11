@@ -25,8 +25,23 @@ WHERE u.user_id IN (10, 11, 12)
 ON CONFLICT (user_id, ticker) DO UPDATE SET
   quantity = GREATEST(portfolio.quantity, EXCLUDED.quantity);
 
--- 3. Clear existing PENDING demo sell orders to guarantee idempotency on multiple runs
-DELETE FROM orders WHERE user_id IN (10, 11, 12) AND is_buy = FALSE AND status = 'PENDING';
+-- 3. Clear existing PENDING bot and demo orders to guarantee idempotency on multiple runs
+-- First, set status to CANCELLED for any partially filled pending orders referenced in trades to preserve FK integrity & trade history
+UPDATE orders SET status = 'CANCELLED'
+WHERE user_id IN (5, 6, 7, 10, 11, 12)
+  AND status = 'PENDING'
+  AND (order_id IN (SELECT sell_order_id FROM trades WHERE sell_order_id IS NOT NULL)
+    OR order_id IN (SELECT buy_order_id FROM trades WHERE buy_order_id IS NOT NULL));
+
+-- Delete remaining unreferenced pending orders for bot accounts (5,6,7) and demo sellers (10,11,12)
+DELETE FROM orders WHERE user_id IN (5, 6, 7, 10, 11, 12) AND status = 'PENDING';
+
+-- Reset baseline current_price for the 5 bot-traded stocks prior to seeding liquidity
+UPDATE stocks SET current_price = 1323.90 WHERE ticker = 'RELIANCE';
+UPDATE stocks SET current_price = 2445.70 WHERE ticker = 'TCS';
+UPDATE stocks SET current_price = 729.00  WHERE ticker = 'HDFCBANK';
+UPDATE stocks SET current_price = 624.16  WHERE ticker = 'TATAMOTORS';
+UPDATE stocks SET current_price = 1942.00 WHERE ticker = 'SUNPHARMA';
 
 -- 4. Insert 21 PENDING LIMIT SELL orders per stock across 3 demo sellers
 
